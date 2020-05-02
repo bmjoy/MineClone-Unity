@@ -1,16 +1,14 @@
-# Ignore everything
 /*
 /*/
 
-# Inverse ignore some stuff
 !/Assets/
 !/ProjectSettings/
+!/Packages/
 !README.md
 !LICENSE
 !/UnityPackage/
 !.gitignore
 
-# OS Stuff
 .DS_Store
 ._*
 .Spotlight-V100
