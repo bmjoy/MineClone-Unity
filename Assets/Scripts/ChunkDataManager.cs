@@ -76,15 +76,6 @@ public class ChunkDataManager
 		if (y > 255) return (char)0;
 		if (y < 0) return (char)0;
 		ChunkData chunkData = data[chunk];
-		try
-		{
-			return chunkData.GetBlocks()[x, y, z];
-		}
-		catch (System.Exception e)
-		{
-			Debug.Log(x + " - " + y + " - " + z);
-			Debug.LogError(e.Message + " - "+e.StackTrace );
-			throw new System.Exception(e.Message);
-		}
+		return chunkData.GetBlocks()[x, y, z];
 	}
 }

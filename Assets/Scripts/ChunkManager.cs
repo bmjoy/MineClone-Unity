@@ -12,6 +12,8 @@ public class ChunkManager : MonoBehaviour
 	private int[,] surroundingArea = new int[32, 32];
 	public int renderDistance = 16;
 	private Queue<Chunk> chunkPool;
+	private Queue<Vector2Int> generateBuildQueue;
+	private Queue<Vector2Int> modifiedRebuildQueue;
 
 	//active chunks
 	private System.Object activeChunksLock = new System.Object();
@@ -49,6 +51,8 @@ public class ChunkManager : MonoBehaviour
 		shouldRender = new List<Vector2Int>();
 		shouldGenerateQueue = new Queue<Vector2Int>();
 		shouldUnloadQueue = new Queue<Vector2Int>();
+		generateBuildQueue = new Queue<Vector2Int>();
+		modifiedRebuildQueue = new Queue<Vector2Int>();
 		for (int i = 0; i < 2048; ++i)
 		{
 			Chunk c = Instantiate(chunkPrefab);
@@ -101,11 +105,8 @@ public class ChunkManager : MonoBehaviour
 			Chunk chunk = chunkPool.Dequeue();
 			chunk.Initialize(shouldGeneratePosition);
 			chunkMap.Add(shouldGeneratePosition, chunk);
-			chunk.Build( chunkDataManager);
-			lock (activeChunksLock)
-			{
-				activeChunks.Add(shouldGeneratePosition);
-			}
+			generateBuildQueue.Enqueue(shouldGeneratePosition);
+
 		}
 
 		bool shouldUnload = false;
@@ -137,6 +138,43 @@ public class ChunkManager : MonoBehaviour
 			chunkToUnload.Unload();
 			chunkPool.Enqueue(chunkToUnload);
 		}
+
+		if (modifiedRebuildQueue.Count > 0)
+		{
+			Vector2Int chunkToRebuild = modifiedRebuildQueue.Dequeue();
+			lock (chunkMapLock)
+			{
+				if (chunkMap.ContainsKey(chunkToRebuild))
+				{
+					chunkMap[chunkToRebuild].Build(chunkDataManager);
+				}
+			}
+		}
+		else
+		{
+			if (generateBuildQueue.Count > 0)
+			{
+				Vector2Int chunkToBuild = generateBuildQueue.Dequeue();
+				Chunk chunk=null;
+				lock (chunkMapLock)
+				{
+					if (chunkMap.ContainsKey(chunkToBuild))
+					{
+						chunk = chunkMap[chunkToBuild];
+					}
+				}
+				if (chunk!=null)
+				{
+					chunk.Build(chunkDataManager);
+					lock (activeChunksLock)
+					{
+						activeChunks.Add(shouldGeneratePosition);
+					}
+				}
+			}
+		}
+
+		
 	}
 
 	private void CalculateShouldRenderThread()
@@ -251,15 +289,18 @@ public class ChunkManager : MonoBehaviour
 
 	public void Modify(Vector2Int chunk, int x, int y, int z, char blockType)
 	{
-		Debug.Log($"Chunk Modifying {x} {y} {z} {blockType}");
+		Debug.Log($"Chunk {chunk} Modifying {x} {y} {z} {blockType}");
 		if (!chunkMap.ContainsKey(chunk)) throw new System.Exception("Chunk is not available");
 		chunkDataManager.data[chunk].Modify(x, y, z, blockType);
 		chunkMap[chunk].Build(chunkDataManager);
-		if (x == 15) chunkMap[chunk + new Vector2Int(1, 0)].Build( chunkDataManager);
-		if (x == 0) chunkMap[chunk + new Vector2Int(-1, 0)].Build( chunkDataManager);
-		if (z == 15) chunkMap[chunk + new Vector2Int(0, 1)].Build( chunkDataManager);
-		if (z == 0) chunkMap[chunk + new Vector2Int(0, -1)].Build( chunkDataManager);
-
+		//if (x == 15) chunkMap[chunk + new Vector2Int(1, 0)].Build( chunkDataManager);
+		//if (x == 0) chunkMap[chunk + new Vector2Int(-1, 0)].Build( chunkDataManager);
+		//if (z == 15) chunkMap[chunk + new Vector2Int(0, 1)].Build( chunkDataManager);
+		//if (z == 0) chunkMap[chunk + new Vector2Int(0, -1)].Build( chunkDataManager);
+		if (x == 15) modifiedRebuildQueue.Enqueue(chunk + new Vector2Int(1, 0));
+		if (x == 0) modifiedRebuildQueue.Enqueue(chunk + new Vector2Int(-1, 0));
+		if (z == 15) modifiedRebuildQueue.Enqueue(chunk + new Vector2Int(0, 1));
+		if (z == 0) modifiedRebuildQueue.Enqueue(chunk + new Vector2Int(0, -1));
 	}
 
 	private void OnDestroy()

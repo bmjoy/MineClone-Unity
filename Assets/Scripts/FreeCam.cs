@@ -38,7 +38,7 @@ public class FreeCam : MonoBehaviour
 		RaycastHit hitInfo;
 		if (Physics.Raycast(transform.position, transform.forward, out hitInfo))
 		{
-			Debug.Log(hitInfo.point);
+			//Debug.Log(hitInfo.point);
 			Vector3 inCube = hitInfo.point - (hitInfo.normal * 0.5f);
 			Vector3Int removeBlock = new Vector3Int(
 				Mathf.FloorToInt(inCube.x),

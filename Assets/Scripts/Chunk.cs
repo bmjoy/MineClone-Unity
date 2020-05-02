@@ -7,8 +7,8 @@ public class Chunk : MonoBehaviour
 	[SerializeField] private MeshFilter meshFilter;
 	[SerializeField] private MeshRenderer meshRenderer;
 	[SerializeField] private MeshCollider meshCollider;
-	[SerializeField] private Vector2Int position;
 
+	public Vector2Int position;
 	private Mesh mesh;
 	private List<Vector3> vertices;
 	private List<int> triangles;
@@ -36,21 +36,39 @@ public class Chunk : MonoBehaviour
 
 	public void Build(ChunkDataManager chunkDataManager)
 	{
+#if UNITY_EDITOR
+		UnityEngine.Profiling.Profiler.BeginSample("BUILDING CHUNK");
+#endif
 		Vector2Int renderPosition = 16 * position;
 		transform.position = new Vector3(renderPosition.x, 0, renderPosition.y);
 		mesh.Clear();
+
+		char[,,] blockData = chunkDataManager.data[position].GetBlocks();
+		char[,,] blockDataFront = chunkDataManager.data[position + new Vector2Int(0, 1)].GetBlocks();
+		char[,,] blockDataBack = chunkDataManager.data[position + new Vector2Int(0, -1)].GetBlocks();
+		char[,,] blockDataLeft = chunkDataManager.data[position + new Vector2Int(-1, 0)].GetBlocks();
+		char[,,] blockDataRight = chunkDataManager.data[position + new Vector2Int(1, 0)].GetBlocks();
 		
+
 		for (int z = 0; z < 16; ++z)
 		{
 			for (int y = 0; y < 256; ++y)
 			{
 				for (int x = 0; x < 16; ++x)
 				{
-					char c = chunkDataManager.GetBlock(position, x, y, z);
+					char c = blockData[x, y, z];
 					if (c != (char)0)
 					{
+						char right = (x == 15 ? blockDataRight[0, y, z] : blockData[x+1, y, z]);
+						char left =( x == 0 ? blockDataLeft[15, y, z] : blockData[x-1, y, z]);
+						char front =( z == 15 ? blockDataFront[x, y, 0] : blockData[x, y, z+1]);
+						char back = (z == 0 ? blockDataBack[x, y, 15] : blockData[x, y, z-1]);
+						char up = (y == 255 ? (char)0 : blockData[x, y + 1, z]);
+						char down = (y == 0 ? (char)0 : blockData[x, y - 1, z]);
+						TextureMapper.TextureMap textureMap = chunkDataManager.textureMapper.map[c];
 
-						if (chunkDataManager.GetBlock(position, x + 1, y, z) == (char)0)
+
+						if (right == (char)0)
 						{
 							AddFace(
 								new Vector3(x + 1, y, z),
@@ -59,9 +77,9 @@ public class Chunk : MonoBehaviour
 								new Vector3(x + 1, y, z + 1),
 								Vector3.right
 							);
-							AddTextureFace(chunkDataManager.textureMapper.map[c].right);
+							AddTextureFace(textureMap.right);
 						}
-						if (chunkDataManager.GetBlock(position, x - 1, y, z) == (char)0)
+						if (left == (char)0)
 						{
 							AddFace(
 								new Vector3(x, y, z + 1),
@@ -70,11 +88,11 @@ public class Chunk : MonoBehaviour
 								new Vector3(x, y, z),
 								-Vector3.right
 							);
-							AddTextureFace(chunkDataManager.textureMapper.map[c].left);
+							AddTextureFace(textureMap.left);
 
 						}
 
-						if (chunkDataManager.GetBlock(position, x, y + 1, z) == (char)0)
+						if (up == (char)0)
 						{
 							AddFace(
 								new Vector3(x, y + 1, z),
@@ -83,10 +101,10 @@ public class Chunk : MonoBehaviour
 								new Vector3(x + 1, y + 1, z),
 								Vector3.up
 							);
-							AddTextureFace(chunkDataManager.textureMapper.map[c].top);
+							AddTextureFace(textureMap.top);
 
 						}
-						if (chunkDataManager.GetBlock(position, x, y - 1, z) == (char)0)
+						if (down == (char)0)
 						{
 							AddFace(
 								new Vector3(x, y, z),
@@ -95,11 +113,11 @@ public class Chunk : MonoBehaviour
 								new Vector3(x, y, z+1),
 								-Vector3.up
 							);
-							AddTextureFace(chunkDataManager.textureMapper.map[c].bottom);
+							AddTextureFace(textureMap.bottom);
 
 						}
 
-						if (chunkDataManager.GetBlock(position, x, y, z + 1) == (char)0)
+						if (front == (char)0)
 						{
 							AddFace(
 								new Vector3(x + 1, y, z + 1),
@@ -108,10 +126,10 @@ public class Chunk : MonoBehaviour
 								new Vector3(x, y, z + 1),
 								Vector3.forward
 							);
-							AddTextureFace(chunkDataManager.textureMapper.map[c].front);
+							AddTextureFace(textureMap.front);
 
 						}
-						if (chunkDataManager.GetBlock(position, x, y, z - 1) == (char)0)
+						if (back == (char)0)
 						{
 							AddFace(
 								new Vector3(x, y, z),
@@ -120,7 +138,7 @@ public class Chunk : MonoBehaviour
 								new Vector3(x + 1, y, z),
 								-Vector3.forward
 							);
-							AddTextureFace(chunkDataManager.textureMapper.map[c].back);
+							AddTextureFace(textureMap.back);
 
 						}
 					}
@@ -137,6 +155,10 @@ public class Chunk : MonoBehaviour
 		uvs.Clear();
 		normals.Clear();
 		meshCollider.sharedMesh = mesh;
+
+#if UNITY_EDITOR
+		UnityEngine.Profiling.Profiler.EndSample();
+#endif
 	}
 
 	private void AddFace(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 normal)

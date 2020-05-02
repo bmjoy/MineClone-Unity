@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Threading;
+using System.Collections.Generic;
 public class ChunkData
 {
 	public Vector2Int position;
@@ -12,7 +13,6 @@ public class ChunkData
 		loadThread = new Thread(Load);
 		loadThread.IsBackground = true;
 		loadThread.Start();
-		Debug.Log("Loading chunk " + position);
 	}
 
 	public bool Ready()
@@ -30,6 +30,11 @@ public class ChunkData
 	{
 		blocks = new char[16, 256, 16];
 		Vector2Int worldPos = position * 16;
+
+		//System.Random random = new System.Random(World.activeWorld.seed);
+		//HashSet<Vector2Int> treePositions = new HashSet<Vector2Int>();
+		
+
 		for (int z = 0; z < 16; ++z)
 		{
 			for (int x = 0; x < 16; ++x)
@@ -70,11 +75,6 @@ public class ChunkData
 					float o6 = SimplexNoise.Noise.CalcPixel3D(noiseX + 80000, y, noiseZ, 0.03f);
 
 					float heightGradient = Mathf.Pow(Mathf.Clamp01(y / 128f), 2f);
-
-
-
-					
-				
 
 					//caves
 					int c = 1;
