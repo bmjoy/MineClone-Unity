@@ -194,7 +194,7 @@ public class Chunk : MonoBehaviour
 
 	public void Unload()
 	{
-		gameObject.SetActive(false);
 		mesh.Clear();
+		gameObject.SetActive(false);
 	}
 }
