@@ -627,8 +627,8 @@ MonoBehaviour:
   gameSettings:
     RenderDistance: 16
   testWorld:
-    name: TestWorld2
-    seed: 925873
+    name: Dev
+    seed: 0
 --- !u!4 &2000708252
 Transform:
   m_ObjectHideFlags: 0

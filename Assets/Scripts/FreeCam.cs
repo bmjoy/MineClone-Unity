@@ -65,7 +65,7 @@ public class FreeCam : MonoBehaviour
 			}
 			if (place)
 			{
-				world.Modify(placeBlock.x, placeBlock.y, placeBlock.z, BlockTypes.PLANKS_OAK);
+				world.Modify(placeBlock.x, placeBlock.y, placeBlock.z, BlockTypes.LEAVES_OAK);
 			}
 		}
 

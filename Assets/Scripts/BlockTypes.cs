@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class BlockTypes
 {
+	//SOLID
 	public const byte AIR = 0;
 	public const byte GRASS =1;
 	public const byte DIRT =2;
@@ -16,4 +17,6 @@ public class BlockTypes
 	public const byte LOG_OAK = 9;
 	public const byte PLANKS_OAK = 10;
 
+	//TRANSPARENT
+	public const byte LEAVES_OAK = 128;
 }

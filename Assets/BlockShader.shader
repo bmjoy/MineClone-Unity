@@ -24,6 +24,7 @@
         struct Input
         {
             float2 uv_MainTex;
+			float4 color : COLOR;
         };
 
         half _Glossiness;
@@ -44,7 +45,8 @@
 			uv = uv/512.0;
 			uv.y = 1 - uv.y;
             fixed4 c = tex2D (_MainTex, uv) * _Color;
-            o.Albedo = c.rgb;
+            o.Albedo = c.rgb * IN.color.rgb;
+			clip(c.a-0.1);
             // Metallic and smoothness come from slider variables
             o.Metallic = _Metallic;
             o.Smoothness = _Glossiness;

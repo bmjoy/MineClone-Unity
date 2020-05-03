@@ -13,6 +13,7 @@ public class Chunk : MonoBehaviour
 	private List<int> triangles;
 	private List<Vector3> normals;
 	private List<Vector2> uvs;
+	private List<Color32> colors;
 
 	public void Awake()
 	{
@@ -26,6 +27,7 @@ public class Chunk : MonoBehaviour
 		normals = new List<Vector3>();
 		uvs = new List<Vector2>();
 		triangles = new List<int>();
+		colors = new List<Color32>();
 	}
 
 	public void Initialize(Vector2Int position)
@@ -67,7 +69,7 @@ public class Chunk : MonoBehaviour
 						TextureMapper.TextureMap textureMap = chunkDataManager.textureMapper.map[c];
 
 
-						if (right == 0)
+						if (right == 0 || right>127)
 						{
 							AddFace(
 								new Vector3(x + 1, y, z),
@@ -77,8 +79,9 @@ public class Chunk : MonoBehaviour
 								Vector3.right
 							);
 							AddTextureFace(textureMap.right);
+							AddColors(textureMap);
 						}
-						if (left == 0)
+						if (left == 0 || left > 127)
 						{
 							AddFace(
 								new Vector3(x, y, z + 1),
@@ -88,10 +91,11 @@ public class Chunk : MonoBehaviour
 								-Vector3.right
 							);
 							AddTextureFace(textureMap.left);
+							AddColors(textureMap);
 
 						}
 
-						if (up == 0)
+						if (up == 0 || up > 127)
 						{
 							AddFace(
 								new Vector3(x, y + 1, z),
@@ -101,9 +105,10 @@ public class Chunk : MonoBehaviour
 								Vector3.up
 							);
 							AddTextureFace(textureMap.top);
+							AddColors(textureMap);
 
 						}
-						if (down == 0)
+						if (down == 0 || down > 127)
 						{
 							AddFace(
 								new Vector3(x, y, z),
@@ -113,10 +118,11 @@ public class Chunk : MonoBehaviour
 								-Vector3.up
 							);
 							AddTextureFace(textureMap.bottom);
+							AddColors(textureMap);
 
 						}
 
-						if (front == 0)
+						if (front == 0 || front > 127)
 						{
 							AddFace(
 								new Vector3(x + 1, y, z + 1),
@@ -126,9 +132,10 @@ public class Chunk : MonoBehaviour
 								Vector3.forward
 							);
 							AddTextureFace(textureMap.front);
+							AddColors(textureMap);
 
 						}
-						if (back == 0)
+						if (back == 0 || back > 127)
 						{
 							AddFace(
 								new Vector3(x, y, z),
@@ -138,6 +145,7 @@ public class Chunk : MonoBehaviour
 								-Vector3.forward
 							);
 							AddTextureFace(textureMap.back);
+							AddColors(textureMap);
 
 						}
 					}
@@ -148,9 +156,11 @@ public class Chunk : MonoBehaviour
 		mesh.SetTriangles(triangles, 0);
 		mesh.SetUVs(0, uvs);
 		mesh.SetNormals(normals);
+		mesh.SetColors(colors);
 		gameObject.SetActive(true);
 		vertices.Clear();
 		triangles.Clear();
+		colors.Clear();
 		uvs.Clear();
 		normals.Clear();
 		meshCollider.sharedMesh = mesh;
@@ -167,10 +177,6 @@ public class Chunk : MonoBehaviour
 		vertices.Add(b);
 		vertices.Add(c);
 		vertices.Add(d);
-		//uvs.Add(new Vector2(0, 0));
-		//uvs.Add(new Vector2(0, 1));
-		//uvs.Add(new Vector2(1, 1));
-		//uvs.Add(new Vector2(1, 0));
 		normals.Add(normal);
 		normals.Add(normal);
 		normals.Add(normal);
@@ -189,6 +195,14 @@ public class Chunk : MonoBehaviour
 		uvs.Add(face.tl);
 		uvs.Add(face.tr);
 		uvs.Add(face.br);
+	}
+
+	private void AddColors(TextureMapper.TextureMap textureMap)
+	{
+		colors.Add(textureMap.defaultColor);
+		colors.Add(textureMap.defaultColor);
+		colors.Add(textureMap.defaultColor);
+		colors.Add(textureMap.defaultColor);
 	}
 
 	public void Unload()

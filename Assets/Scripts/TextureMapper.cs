@@ -10,12 +10,13 @@ public class TextureMapper
 		map = new Dictionary<byte, TextureMap>();
 
 		map.Add(BlockTypes.GRASS, new TextureMap(
-			new TextureMap.Face(new Vector2(192, 64)), 
+			new TextureMap.Face(new Vector2(192, 64)),
 			new TextureMap.Face(new Vector2(192, 64)),
 			new TextureMap.Face(new Vector2(192, 64)),
 			new TextureMap.Face(new Vector2(192, 64)),
 			new TextureMap.Face(new Vector2(384, 288)),
-			new TextureMap.Face(new Vector2(176, 160))
+			new TextureMap.Face(new Vector2(176, 160)),
+			new Color32(255,255,255,255)
 			)
 		);
 
@@ -25,7 +26,8 @@ public class TextureMapper
 			new TextureMap.Face(new Vector2(176, 160)),
 			new TextureMap.Face(new Vector2(176, 160)),
 			new TextureMap.Face(new Vector2(176, 160)),
-			new TextureMap.Face(new Vector2(176, 160))
+			new TextureMap.Face(new Vector2(176, 160)),
+			new Color32(255, 255, 255, 255)
 			)
 		);
 
@@ -35,7 +37,8 @@ public class TextureMapper
 			new TextureMap.Face(new Vector2(496, 144)),
 			new TextureMap.Face(new Vector2(496, 144)),
 			new TextureMap.Face(new Vector2(496, 144)),
-			new TextureMap.Face(new Vector2(496, 144))
+			new TextureMap.Face(new Vector2(496, 144)),
+			new Color32(255, 255, 255, 255)
 			)
 		);
 
@@ -45,7 +48,8 @@ public class TextureMapper
 			new TextureMap.Face(new Vector2(352, 416)),
 			new TextureMap.Face(new Vector2(352, 416)),
 			new TextureMap.Face(new Vector2(352, 416)),
-			new TextureMap.Face(new Vector2(352, 416))
+			new TextureMap.Face(new Vector2(352, 416)),
+			new Color32(255, 255, 255, 255)
 			)
 		);
 
@@ -55,7 +59,8 @@ public class TextureMapper
 			new TextureMap.Face(new Vector2(432, 368)),
 			new TextureMap.Face(new Vector2(432, 368)),
 			new TextureMap.Face(new Vector2(432, 368)),
-			new TextureMap.Face(new Vector2(432, 368))
+			new TextureMap.Face(new Vector2(432, 368)),
+			new Color32(255, 255, 255, 255)
 			)
 		);
 
@@ -65,7 +70,8 @@ public class TextureMapper
 			new TextureMap.Face(new Vector2(208, 32)),
 			new TextureMap.Face(new Vector2(208, 32)),
 			new TextureMap.Face(new Vector2(208, 32)),
-			new TextureMap.Face(new Vector2(208, 32))
+			new TextureMap.Face(new Vector2(208, 32)),
+			new Color32(255, 255, 255, 255)
 			)
 		);
 
@@ -75,7 +81,9 @@ public class TextureMapper
 			new TextureMap.Face(new Vector2(192, 112)),
 			new TextureMap.Face(new Vector2(192, 112)),
 			new TextureMap.Face(new Vector2(192, 112)),
-			new TextureMap.Face(new Vector2(192, 112))
+			new TextureMap.Face(new Vector2(192, 112)),
+			new Color32(255, 255, 255, 255)
+
 			)
 		);
 
@@ -85,7 +93,8 @@ public class TextureMapper
 			new TextureMap.Face(new Vector2(176, 192)),
 			new TextureMap.Face(new Vector2(176, 192)),
 			new TextureMap.Face(new Vector2(176, 192)),
-			new TextureMap.Face(new Vector2(176, 192))
+			new TextureMap.Face(new Vector2(176, 192)),
+			new Color32(255, 255, 255, 255)
 			)
 		);
 
@@ -95,7 +104,8 @@ public class TextureMapper
 			new TextureMap.Face(new Vector2(256, 112)),
 			new TextureMap.Face(new Vector2(256, 112)),
 			new TextureMap.Face(new Vector2(256, 96)),
-			new TextureMap.Face(new Vector2(256, 96))
+			new TextureMap.Face(new Vector2(256, 96)),
+			new Color32(255, 255, 255, 255)
 			)
 		);
 
@@ -105,14 +115,25 @@ public class TextureMapper
 			new TextureMap.Face(new Vector2(256, 80)),
 			new TextureMap.Face(new Vector2(256, 80)),
 			new TextureMap.Face(new Vector2(256, 80)),
-			new TextureMap.Face(new Vector2(256, 80))
+			new TextureMap.Face(new Vector2(256, 80)),
+			new Color32(255, 255, 255, 255)
+			)
+		);
+		map.Add(BlockTypes.LEAVES_OAK, new TextureMap(
+			new TextureMap.Face(new Vector2(256, 128)),
+			new TextureMap.Face(new Vector2(256, 128)),
+			new TextureMap.Face(new Vector2(256, 128)),
+			new TextureMap.Face(new Vector2(256, 128)),
+			new TextureMap.Face(new Vector2(256, 128)),
+			new TextureMap.Face(new Vector2(256, 128)),
+			new Color32(168, 255, 68, 255)
 			)
 		);
 	}
 
 	public class TextureMap
 	{
-		public TextureMap(Face front, Face back, Face left, Face right, Face top, Face bottom)
+		public TextureMap(Face front, Face back, Face left, Face right, Face top, Face bottom, Color defaultColor)
 		{
 			this.front = front;
 			this.back = back;
@@ -120,8 +141,10 @@ public class TextureMapper
 			this.right = right;
 			this.top = top;
 			this.bottom = bottom;
+			this.defaultColor = defaultColor;
 		}
 		public Face front, back, left, right, top, bottom;
+		public Color32 defaultColor;
 		public class Face
 		{
 			public Face(Vector2 tl)
