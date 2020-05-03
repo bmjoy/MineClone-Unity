@@ -4,14 +4,14 @@ using UnityEngine;
 
 public class BlockTypes
 {
-	public const char AIR = (char)0;
-	public const char GRASS = (char)1;
-	public const char DIRT = (char)2;
-	public const char STONE = (char)3;
-	public const char BEDROCK = (char)4;
-	public const char COAL = (char)5;
-	public const char IRON = (char)6;
-	public const char GOLD = (char)7;
-	public const char DIAMOND = (char)8;
+	public const byte AIR = 0;
+	public const byte GRASS =1;
+	public const byte DIRT =2;
+	public const byte STONE = 3;
+	public const byte BEDROCK = 4;
+	public const byte COAL =5;
+	public const byte IRON = 6;
+	public const byte GOLD = 7;
+	public const byte DIAMOND = 8;
 
 }

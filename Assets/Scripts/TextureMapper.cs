@@ -4,10 +4,10 @@ using UnityEngine;
 
 public class TextureMapper
 {
-	public Dictionary<char, TextureMap> map;
+	public Dictionary<byte, TextureMap> map;
 	public TextureMapper()
 	{
-		map = new Dictionary<char, TextureMap>();
+		map = new Dictionary<byte, TextureMap>();
 
 		map.Add(BlockTypes.GRASS, new TextureMap(
 			new TextureMap.Face(new Vector2(192, 64)), 

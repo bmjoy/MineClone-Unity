@@ -51,7 +51,7 @@ public class ChunkDataManager
 		return false;
 	}
 
-	public char GetBlock(Vector2Int chunk, int x, int y, int z)
+	public byte GetBlock(Vector2Int chunk, int x, int y, int z)
 	{
 		if (x > 15)
 		{
@@ -73,8 +73,8 @@ public class ChunkDataManager
 			z += 16;
 			chunk.y -= 1;
 		}
-		if (y > 255) return (char)0;
-		if (y < 0) return (char)0;
+		if (y > 255) return 0;
+		if (y < 0) return 0;
 		ChunkData chunkData = data[chunk];
 		return chunkData.GetBlocks()[x, y, z];
 	}

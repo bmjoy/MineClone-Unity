@@ -61,11 +61,11 @@ public class FreeCam : MonoBehaviour
 
 			if (remove)
 			{
-				world.Modify(removeBlock.x, removeBlock.y, removeBlock.z, (char)0);
+				world.Modify(removeBlock.x, removeBlock.y, removeBlock.z, 0);
 			}
 			if (place)
 			{
-				world.Modify(placeBlock.x, placeBlock.y, placeBlock.z, (char)1);
+				world.Modify(placeBlock.x, placeBlock.y, placeBlock.z, 1);
 			}
 		}
 

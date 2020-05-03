@@ -24,7 +24,7 @@ public class World : MonoBehaviour
 		didModifyThisFrame = false;
 	}
 
-	public void Modify(int x, int y, int z, char blockType)
+	public void Modify(int x, int y, int z, byte blockType)
 	{
 		if (y < 0 || y > 255)
 		{

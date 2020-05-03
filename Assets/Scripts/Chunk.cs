@@ -43,11 +43,11 @@ public class Chunk : MonoBehaviour
 		transform.position = new Vector3(renderPosition.x, 0, renderPosition.y);
 		mesh.Clear();
 
-		char[,,] blockData = chunkDataManager.data[position].GetBlocks();
-		char[,,] blockDataFront = chunkDataManager.data[position + new Vector2Int(0, 1)].GetBlocks();
-		char[,,] blockDataBack = chunkDataManager.data[position + new Vector2Int(0, -1)].GetBlocks();
-		char[,,] blockDataLeft = chunkDataManager.data[position + new Vector2Int(-1, 0)].GetBlocks();
-		char[,,] blockDataRight = chunkDataManager.data[position + new Vector2Int(1, 0)].GetBlocks();
+		byte[,,] blockData = chunkDataManager.data[position].GetBlocks();
+		byte[,,] blockDataFront = chunkDataManager.data[position + new Vector2Int(0, 1)].GetBlocks();
+		byte[,,] blockDataBack = chunkDataManager.data[position + new Vector2Int(0, -1)].GetBlocks();
+		byte[,,] blockDataLeft = chunkDataManager.data[position + new Vector2Int(-1, 0)].GetBlocks();
+		byte[,,] blockDataRight = chunkDataManager.data[position + new Vector2Int(1, 0)].GetBlocks();
 		
 
 		for (int z = 0; z < 16; ++z)
@@ -56,19 +56,19 @@ public class Chunk : MonoBehaviour
 			{
 				for (int x = 0; x < 16; ++x)
 				{
-					char c = blockData[x, y, z];
-					if (c != (char)0)
+					byte c = blockData[x, y, z];
+					if (c != 0)
 					{
-						char right = (x == 15 ? blockDataRight[0, y, z] : blockData[x+1, y, z]);
-						char left =( x == 0 ? blockDataLeft[15, y, z] : blockData[x-1, y, z]);
-						char front =( z == 15 ? blockDataFront[x, y, 0] : blockData[x, y, z+1]);
-						char back = (z == 0 ? blockDataBack[x, y, 15] : blockData[x, y, z-1]);
-						char up = (y == 255 ? (char)0 : blockData[x, y + 1, z]);
-						char down = (y == 0 ? (char)0 : blockData[x, y - 1, z]);
+						byte right = (x == 15 ? blockDataRight[0, y, z] : blockData[x+1, y, z]);
+						byte left =( x == 0 ? blockDataLeft[15, y, z] : blockData[x-1, y, z]);
+						byte front =( z == 15 ? blockDataFront[x, y, 0] : blockData[x, y, z+1]);
+						byte back = (z == 0 ? blockDataBack[x, y, 15] : blockData[x, y, z-1]);
+						byte up = (y == 255 ? (byte)0 : blockData[x, y + 1, z]);
+						byte down = (y == 0 ? (byte)0 : blockData[x, y - 1, z]);
 						TextureMapper.TextureMap textureMap = chunkDataManager.textureMapper.map[c];
 
 
-						if (right == (char)0)
+						if (right == 0)
 						{
 							AddFace(
 								new Vector3(x + 1, y, z),
@@ -79,7 +79,7 @@ public class Chunk : MonoBehaviour
 							);
 							AddTextureFace(textureMap.right);
 						}
-						if (left == (char)0)
+						if (left == 0)
 						{
 							AddFace(
 								new Vector3(x, y, z + 1),
@@ -92,7 +92,7 @@ public class Chunk : MonoBehaviour
 
 						}
 
-						if (up == (char)0)
+						if (up == 0)
 						{
 							AddFace(
 								new Vector3(x, y + 1, z),
@@ -104,7 +104,7 @@ public class Chunk : MonoBehaviour
 							AddTextureFace(textureMap.top);
 
 						}
-						if (down == (char)0)
+						if (down == 0)
 						{
 							AddFace(
 								new Vector3(x, y, z),
@@ -117,7 +117,7 @@ public class Chunk : MonoBehaviour
 
 						}
 
-						if (front == (char)0)
+						if (front == 0)
 						{
 							AddFace(
 								new Vector3(x + 1, y, z + 1),
@@ -129,7 +129,7 @@ public class Chunk : MonoBehaviour
 							AddTextureFace(textureMap.front);
 
 						}
-						if (back == (char)0)
+						if (back == 0)
 						{
 							AddFace(
 								new Vector3(x, y, z),

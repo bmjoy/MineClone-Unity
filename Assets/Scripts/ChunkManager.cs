@@ -295,7 +295,7 @@ public class ChunkManager : MonoBehaviour
 		}
 	}
 
-	public void Modify(Vector2Int chunk, int x, int y, int z, char blockType)
+	public void Modify(Vector2Int chunk, int x, int y, int z, byte blockType)
 	{
 		Debug.Log($"Chunk {chunk} Modifying {x} {y} {z} {blockType}");
 		if (!chunkMap.ContainsKey(chunk)) throw new System.Exception("Chunk is not available");

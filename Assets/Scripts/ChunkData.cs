@@ -4,7 +4,7 @@ using System.Collections.Generic;
 public class ChunkData
 {
 	public Vector2Int position;
-	private char[,,] blocks;
+	private byte[,,] blocks;
 	private bool ready = false;
 	private Thread loadThread;
 	public ChunkData(Vector2Int position)
@@ -20,7 +20,7 @@ public class ChunkData
 		return ready;
 	}
 
-	public char[,,] GetBlocks()
+	public byte[,,] GetBlocks()
 	{
 		if (!ready) throw new System.Exception("Chunk has not finished loading");
 		return blocks;
@@ -28,7 +28,7 @@ public class ChunkData
 
 	public void Load()
 	{
-		blocks = new char[16, 256, 16];
+		blocks = new byte[16, 256, 16];
 		Vector2Int worldPos = position * 16;
 
 		//System.Random random = new System.Random(World.activeWorld.seed);
@@ -77,7 +77,6 @@ public class ChunkData
 					float heightGradient = Mathf.Pow(Mathf.Clamp01(y / 128f), 2f);
 
 					//caves
-					int c = 1;
 					float c1 = SimplexNoise.Noise.CalcPixel3D(noiseX, y, noiseZ, 0.1f);
 					float c2 = SimplexNoise.Noise.CalcPixel3D(noiseX, y, noiseZ, 0.04f);
 					float c3 = SimplexNoise.Noise.CalcPixel3D(noiseX, y, noiseZ, 0.02f);
@@ -142,7 +141,7 @@ public class ChunkData
 		ready = true;
 	}
 
-	public void Modify(int x, int y, int z, char blockType)
+	public void Modify(int x, int y, int z, byte blockType)
 	{
 		if (!ready) throw new System.Exception("Chunk has not finished loading");
 		blocks[x, y, z] = blockType;
