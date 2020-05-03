@@ -13,5 +13,7 @@ public class BlockTypes
 	public const byte IRON = 6;
 	public const byte GOLD = 7;
 	public const byte DIAMOND = 8;
+	public const byte LOG_OAK = 9;
+	public const byte PLANKS_OAK = 10;
 
 }

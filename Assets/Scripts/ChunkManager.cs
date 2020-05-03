@@ -97,6 +97,7 @@ public class ChunkManager : MonoBehaviour
 				shouldGeneratePosition = shouldGenerateQueue.Peek();
 				if (chunkDataManager.CanRender(shouldGeneratePosition))
 				{
+					Debug.Log($"Chunk {shouldGeneratePosition} can render. Adding to build queue");
 					shouldGenerateQueue.Dequeue(); // actually dequeue if can render
 					shouldGenerate = true;
 				}
@@ -299,12 +300,9 @@ public class ChunkManager : MonoBehaviour
 	{
 		Debug.Log($"Chunk {chunk} Modifying {x} {y} {z} {blockType}");
 		if (!chunkMap.ContainsKey(chunk)) throw new System.Exception("Chunk is not available");
-		chunkDataManager.data[chunk].Modify(x, y, z, blockType);
+		chunkDataManager.Modify(chunk, x, y, z, blockType);
+		//chunkDataManager.data[chunk].Modify(x, y, z, blockType);
 		chunkMap[chunk].Build(chunkDataManager);
-		//if (x == 15) chunkMap[chunk + new Vector2Int(1, 0)].Build( chunkDataManager);
-		//if (x == 0) chunkMap[chunk + new Vector2Int(-1, 0)].Build( chunkDataManager);
-		//if (z == 15) chunkMap[chunk + new Vector2Int(0, 1)].Build( chunkDataManager);
-		//if (z == 0) chunkMap[chunk + new Vector2Int(0, -1)].Build( chunkDataManager);
 		if (x == 15) modifiedRebuildQueue.Enqueue(chunk + new Vector2Int(1, 0));
 		if (x == 0) modifiedRebuildQueue.Enqueue(chunk + new Vector2Int(-1, 0));
 		if (z == 15) modifiedRebuildQueue.Enqueue(chunk + new Vector2Int(0, 1));

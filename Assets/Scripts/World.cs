@@ -5,19 +5,24 @@ using UnityEngine;
 public class World : MonoBehaviour
 {
 	public static World activeWorld;
+	public WorldInfo info;
 	public Camera mainCamera;
 	public ChunkManager chunkManager;
-	public int seed = 0;
 	private bool didModifyThisFrame = false;
-	private void Awake()
+	private bool initialized = false;
+	public void Initialize(WorldInfo info)
 	{
+		this.info = info;
+		if (info.seed == 0) info.seed = GenerateSeed();
 		activeWorld = this;
 		chunkManager.Initialize();
-		SimplexNoise.Noise.Seed = seed;
+		SimplexNoise.Noise.Seed = info.seed;
 		System.GC.Collect();
+		initialized = true;
 	}
 	void LateUpdate()
     {
+		if (!initialized) return;
 		//update chunks if no modifications have happened this frame
 		//only rebuild 1 chunk per frame to avoid framedrops
 		if(!didModifyThisFrame) chunkManager.UpdateChunks(mainCamera);
@@ -26,6 +31,7 @@ public class World : MonoBehaviour
 
 	public void Modify(int x, int y, int z, byte blockType)
 	{
+		if (!initialized) return;
 		if (y < 0 || y > 255)
 		{
 			Debug.LogWarning("This is outside build limit");
@@ -38,5 +44,12 @@ public class World : MonoBehaviour
 		Debug.Log($"World Modifying {x} {y} {z} {(int)blockType}. Chunk {chunkX} {chunkY}. Relative {relativeX} {y} {relativeZ}");
 		chunkManager.Modify(new Vector2Int(chunkX, chunkY), relativeX, y, relativeZ, blockType);
 		didModifyThisFrame = true;
+	}
+
+	private int GenerateSeed()
+	{
+		int tickCount = System.Environment.TickCount;
+		int processId = System.Diagnostics.Process.GetCurrentProcess().Id;
+		return new System.Random(tickCount+processId).Next();
 	}
 }

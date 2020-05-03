@@ -3,56 +3,130 @@ using System.Collections.Generic;
 using UnityEngine;
 public class ChunkDataManager
 {
-	public ChunkDataManager()
-	{
-		data = new Dictionary<Vector2Int, ChunkData>();
-		currentlyLoading = new List<ChunkData>();
-		textureMapper = new TextureMapper();
-	}
 	public Dictionary<Vector2Int, ChunkData> data;
 	public TextureMapper textureMapper;
 
-	private List<ChunkData> currentlyLoading;
+	private List<ChunkData> renderQueue;
+	private List<ChunkData> applyingChangesQueue;
+	private List<ChunkData> dirtyChunks;
+
+	public ChunkDataManager()
+	{
+		data = new Dictionary<Vector2Int, ChunkData>();
+		textureMapper = new TextureMapper();
+		renderQueue = new List<ChunkData>();
+		applyingChangesQueue = new List<ChunkData>();
+		dirtyChunks = new List<ChunkData>();
+	}
+
 	public void Update()
 	{
-		for (int i = currentlyLoading.Count - 1; i > -1; --i)
+		if (renderQueue.Count > 0)
 		{
-			ChunkData chunkData = currentlyLoading[i];
-			if (data.ContainsKey(chunkData.position))
+			//only process first one
+			ChunkData chunkData = renderQueue[0];
+			Vector2Int position = chunkData.position;
+			if (!chunkData.startedLoadingStructures)
 			{
-				//duplicate
-				currentlyLoading.RemoveAt(i);
-				continue;
+				bool canStart = true;
+				ChunkData front = data[position + new Vector2Int(0, 1)];
+				ChunkData back = data[position + new Vector2Int(0, -1)];
+				ChunkData left = data[position + new Vector2Int(-1, 0)];
+				ChunkData right = data[position + new Vector2Int(1, 0)];
+				canStart &= chunkData.terrainReady;
+				canStart &= front.terrainReady;
+				canStart &= back.terrainReady;
+				canStart &= left.terrainReady;
+				canStart &= right.terrainReady;
+				if (canStart)
+				{
+					chunkData.StartStructuresLoading(front, left, back, right);
+				}
 			}
-			if (chunkData.Ready())
+			else
 			{
-				data.Add(chunkData.position, chunkData);
-				currentlyLoading.RemoveAt(i);
+				if (chunkData.structuresReady)
+				{
+					applyingChangesQueue.Add(chunkData);
+					renderQueue.RemoveAt(0);
+				}
 			}
+		}
+		if (applyingChangesQueue.Count > 0)
+		{
+			ChunkData chunkData = applyingChangesQueue[0];
+			if (chunkData.chunkReady)
+			{
+				applyingChangesQueue.RemoveAt(0);
+			}
+		}
+		if (dirtyChunks.Count > 0)
+		{
+			SaveDataManager.instance.Save(dirtyChunks[0].saveData);
+			dirtyChunks[0].isDirty = false;
+			dirtyChunks.RemoveAt(0);
 		}
 	}
 
 	public bool CanRender(Vector2Int chunk)
 	{
-		bool result = true;
-		result &= IsAvailableOtherwiseLoad(chunk);
-		result &= IsAvailableOtherwiseLoad(chunk+new Vector2Int(1,0));
-		result &= IsAvailableOtherwiseLoad(chunk + new Vector2Int(-1, 0));
-		result &= IsAvailableOtherwiseLoad(chunk + new Vector2Int(0, 1));
-		result &= IsAvailableOtherwiseLoad(chunk + new Vector2Int(0, -1));
-		return result;
+		if (data.ContainsKey(chunk))
+		{
+			ChunkData chunkData = data[chunk];
+			if (!chunkData.chunkReady)
+			{
+				//data exists but is either still loading terrain, placing structures or applying user changes
+				if (applyingChangesQueue.Contains(chunkData))
+				{
+					//already final stages of being ready, currently applying user changes;
+					return false;
+				}
+				if (!renderQueue.Contains(chunkData))
+				{
+					//only flagged for terrain loading, add to renderQueue to start loading structures/terrain
+					//load terrain data for neighbors if they don't exist yet
+					renderQueue.Add(chunkData);
+					StartChunkLoadingIfNecessary(chunk + new Vector2Int(1, 0));
+					StartChunkLoadingIfNecessary(chunk + new Vector2Int(-1, 0));
+					StartChunkLoadingIfNecessary(chunk + new Vector2Int(0, 1));
+					StartChunkLoadingIfNecessary(chunk + new Vector2Int(0, -1));
+					return false;
+				}
+				else
+				{
+					//currently busy with either terrain loading or structures
+					//has already been flagged to do structures and user changes
+					return false;
+				}
+			}
+			return true;
+		}
+		else
+		{
+			ChunkData chunkData = StartChunkLoadingIfNecessary(chunk);
+			renderQueue.Add(chunkData);
+			StartChunkLoadingIfNecessary(chunk + new Vector2Int(1, 0));
+			StartChunkLoadingIfNecessary(chunk + new Vector2Int(-1, 0));
+			StartChunkLoadingIfNecessary(chunk + new Vector2Int(0, 1));
+			StartChunkLoadingIfNecessary(chunk + new Vector2Int(0, -1));
+			return false;
+		}
 	}
 
-	private bool IsAvailableOtherwiseLoad(Vector2Int position)
+	private ChunkData StartChunkLoadingIfNecessary(Vector2Int position)
 	{
-		if (data.ContainsKey(position)) return true;
+		if (data.ContainsKey(position)) return data[position];
 		ChunkData chunkData = new ChunkData(position);
-		currentlyLoading.Add(chunkData);
-		return false;
+		data.Add(position, chunkData);
+		chunkData.StartTerrainLoading();
+		return chunkData;
 	}
+
+
 
 	public byte GetBlock(Vector2Int chunk, int x, int y, int z)
 	{
+		if (!data[chunk].chunkReady) throw new System.Exception($"Chunk {chunk} is not ready");
 		if (x > 15)
 		{
 			x -= 16;
@@ -75,7 +149,13 @@ public class ChunkDataManager
 		}
 		if (y > 255) return 0;
 		if (y < 0) return 0;
-		ChunkData chunkData = data[chunk];
-		return chunkData.GetBlocks()[x, y, z];
+		return data[chunk].GetBlocks()[x, y, z];
+	}
+
+	public void Modify(Vector2Int chunk, int x, int y, int z, byte blockType)
+	{
+		data[chunk].Modify(x, y, z, blockType);
+		data[chunk].isDirty = true;
+		dirtyChunks.Add(data[chunk]);
 	}
 }

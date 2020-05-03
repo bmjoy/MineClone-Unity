@@ -7,7 +7,6 @@ public class Chunk : MonoBehaviour
 	[SerializeField] private MeshFilter meshFilter;
 	[SerializeField] private MeshRenderer meshRenderer;
 	[SerializeField] private MeshCollider meshCollider;
-
 	public Vector2Int position;
 	private Mesh mesh;
 	private List<Vector3> vertices;

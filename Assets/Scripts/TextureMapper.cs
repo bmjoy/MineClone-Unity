@@ -88,6 +88,26 @@ public class TextureMapper
 			new TextureMap.Face(new Vector2(176, 192))
 			)
 		);
+
+		map.Add(BlockTypes.LOG_OAK, new TextureMap(
+			new TextureMap.Face(new Vector2(256, 112)),
+			new TextureMap.Face(new Vector2(256, 112)),
+			new TextureMap.Face(new Vector2(256, 112)),
+			new TextureMap.Face(new Vector2(256, 112)),
+			new TextureMap.Face(new Vector2(256, 96)),
+			new TextureMap.Face(new Vector2(256, 96))
+			)
+		);
+
+		map.Add(BlockTypes.PLANKS_OAK, new TextureMap(
+			new TextureMap.Face(new Vector2(256, 80)),
+			new TextureMap.Face(new Vector2(256, 80)),
+			new TextureMap.Face(new Vector2(256, 80)),
+			new TextureMap.Face(new Vector2(256, 80)),
+			new TextureMap.Face(new Vector2(256, 80)),
+			new TextureMap.Face(new Vector2(256, 80))
+			)
+		);
 	}
 
 	public class TextureMap

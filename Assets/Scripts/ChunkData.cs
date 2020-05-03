@@ -5,35 +5,79 @@ public class ChunkData
 {
 	public Vector2Int position;
 	private byte[,,] blocks;
-	private bool ready = false;
-	private Thread loadThread;
+	public bool terrainReady { get; private set; }
+	public bool startedLoadingStructures { get; private set; }
+	public bool structuresReady { get; private set; }
+	public bool chunkReady { get; private set; }
+
+	public bool isDirty;
+
+	//devide by chance ( 1 in X )
+	const int STRUCTURE_CHANCE_TREE = (int.MaxValue / 100);
+
+	private Thread loadTerrainThread;
+	private Thread loadStructuresThread;
+	private Thread loadChangesThread;
+
+	public List<StructureInfo> structures;
+
+	public ChunkSaveData saveData;
+
+	private ChunkData front, left, back, right; //neighbours for structure loading
+
+	public struct StructureInfo
+	{
+		public StructureInfo(Vector3Int position, Structure.Type type)
+		{
+			this.position = position;
+			this.type = type;
+		}
+		public Vector3Int position;
+		public Structure.Type type;
+	}
+
 	public ChunkData(Vector2Int position)
 	{
 		this.position = position;
-		loadThread = new Thread(Load);
-		loadThread.IsBackground = true;
-		loadThread.Start();
-	}
-
-	public bool Ready()
-	{
-		return ready;
+		terrainReady = false;
+		startedLoadingStructures = false;
+		structuresReady = false;
+		chunkReady = false;
+		isDirty = false;
 	}
 
 	public byte[,,] GetBlocks()
 	{
-		if (!ready) throw new System.Exception("Chunk has not finished loading");
+		if (!terrainReady) throw new System.Exception($"Chunk {position} has not finished loading");
 		return blocks;
 	}
 
-	public void Load()
+	public void StartTerrainLoading()
+	{
+		Debug.Log($"Chunk {position} start terrain loading");
+		loadTerrainThread = new Thread(LoadTerrain);
+		loadTerrainThread.IsBackground = true;
+		loadTerrainThread.Start();
+	}
+
+	public void StartStructuresLoading(ChunkData front, ChunkData left, ChunkData back, ChunkData right)
+	{
+		Debug.Log($"Chunk {position} start structure loading");
+		this.front = front;
+		this.left = left;
+		this.right = right;
+		this.back = back;
+
+		loadStructuresThread = new Thread(LoadStructures);
+		loadStructuresThread.IsBackground = true;
+		loadStructuresThread.Start();
+		startedLoadingStructures = true;
+	}
+
+	public void LoadTerrain() //also loads structures INFO
 	{
 		blocks = new byte[16, 256, 16];
 		Vector2Int worldPos = position * 16;
-
-		//System.Random random = new System.Random(World.activeWorld.seed);
-		//HashSet<Vector2Int> treePositions = new HashSet<Vector2Int>();
-		
 
 		for (int z = 0; z < 16; ++z)
 		{
@@ -65,7 +109,6 @@ public class ChunkData
 						continue;
 					}
 
-
 					//ores
 					float o1 = SimplexNoise.Noise.CalcPixel3D(noiseX + 50000, y, noiseZ, 0.1f);
 					float o2 = SimplexNoise.Noise.CalcPixel3D(noiseX + 40000, y, noiseZ, 0.1f);
@@ -88,8 +131,6 @@ public class ChunkData
 						blocks[x, y, z] = BlockTypes.AIR;
 						continue;
 					}
-
-					
 
 					//grass level
 					if (y == heightInt)
@@ -138,12 +179,114 @@ public class ChunkData
 				}
 			}
 		}
-		ready = true;
+
+		string h = World.activeWorld.info.seed.ToString() + position.x.ToString() + position.y.ToString();
+		int structuresSeed = h.GetHashCode();
+		Debug.Log("Chunk structures seed is " + structuresSeed);
+		System.Random rnd = new System.Random(structuresSeed);
+		structures = new List<StructureInfo>();
+		bool[,] spotsTaken = new bool[16, 16];
+
+		//trees
+		for (int y = 1; y < 15; ++y)
+		{
+			for (int x = 1; x < 15; ++x)
+			{
+				if (rnd.Next() < STRUCTURE_CHANCE_TREE)
+				{
+					if (IsSpotFree(spotsTaken, new Vector2Int(x, y), 2))
+					{
+						spotsTaken[x, y] = true;
+						int height = 255;
+						while (height > 0)
+						{
+							if (blocks[x, height, y] == BlockTypes.GRASS)
+							{
+								Structure.Type structureType = Structure.Type.OAK_TREE_SMALL_1;
+								structures.Add(new StructureInfo(new Vector3Int(x, height + 1, y), structureType));
+								//place tree function
+								//temp
+								blocks[x, height + 1, y] = BlockTypes.LOG_OAK;
+								blocks[x, height +2, y] = BlockTypes.LOG_OAK;
+								blocks[x, height + 3, y] = BlockTypes.LOG_OAK;
+								blocks[x, height + 4, y] = BlockTypes.LOG_OAK;
+								blocks[x, height + 5 ,y] = BlockTypes.LOG_OAK;
+								break;
+							}
+							height--;
+						}
+					}
+				}
+			}
+		}
+
+
+		//already load changes from disk here (apply later)
+		saveData = SaveDataManager.instance.Load(position);
+
+		terrainReady = true;
+		Debug.Log($"Chunk {position} terrain ready");
+
+	}
+
+	private bool IsSpotFree(bool[,] spotsTaken, Vector2Int position, int size) //x area is for example size + 1 + size
+	{
+		bool spotTaken = false;
+		for (int y = Mathf.Max(0, position.y-size); y < Mathf.Min(15, position.y + size + 1); ++y)
+		{
+			for (int x = Mathf.Max(0, position.x-size); x < Mathf.Min(15, position.x + size + 1); ++x)
+			{
+				spotTaken |= spotsTaken[x, y];
+			}
+		}
+		return !spotTaken;
+	}
+
+	private void PlaceStructure(Vector2Int position)
+	{
+
+	}
+
+	private void LoadStructures()
+	{
+		//load structures
+		
+
+
+
+
+		front = null;
+		left = null;
+		right = null;
+		back = null;
+		structuresReady = true;
+		Debug.Log($"Chunk {position} structures ready");
+
+
+		loadChangesThread = new Thread(ApplyChanges);
+		loadChangesThread.IsBackground = true;
+		loadChangesThread.Start();
+	}
+
+	private void ApplyChanges()
+	{
+		//load changes
+		List<ChunkSaveData.C> changes = saveData.changes;
+		for (int i = 0; i < changes.Count; ++i)
+		{
+			ChunkSaveData.C c = changes[i];
+			blocks[c.x, c.y, c.z] = c.b;
+		}
+
+		chunkReady = true;
+		Debug.Log($"Chunk {position} ready");
+
 	}
 
 	public void Modify(int x, int y, int z, byte blockType)
 	{
-		if (!ready) throw new System.Exception("Chunk has not finished loading");
+		if (!chunkReady) throw new System.Exception("Chunk has not finished loading");
+		saveData.changes.Add(new ChunkSaveData.C((byte)x, (byte)y, (byte)z, blockType));
 		blocks[x, y, z] = blockType;
 	}
 }
