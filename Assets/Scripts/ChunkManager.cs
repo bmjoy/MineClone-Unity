@@ -8,9 +8,10 @@ public class ChunkManager : MonoBehaviour
 {
 	public Chunk chunkPrefab;
 	private ChunkDataManager chunkDataManager;
-	
-	private int[,] surroundingArea = new int[32, 32];
+
 	public int renderDistance = 16;
+	private int[,] surroundingArea;
+	
 	private Queue<Chunk> chunkPool;
 	private Queue<Vector2Int> generateBuildQueue;
 	private Queue<Vector2Int> modifiedRebuildQueue;
@@ -44,6 +45,7 @@ public class ChunkManager : MonoBehaviour
 
 	public void Initialize()
 	{
+		surroundingArea = new int[renderDistance*2, renderDistance*2];
 		chunkDataManager = new ChunkDataManager();
 		chunkMap = new Dictionary<Vector2Int, Chunk>();
 		chunkPool = new Queue<Chunk>();
@@ -53,7 +55,7 @@ public class ChunkManager : MonoBehaviour
 		shouldUnloadQueue = new Queue<Vector2Int>();
 		generateBuildQueue = new Queue<Vector2Int>();
 		modifiedRebuildQueue = new Queue<Vector2Int>();
-		for (int i = 0; i < 2048; ++i)
+		for (int i = 0; i < renderDistance*renderDistance*2; ++i)
 		{
 			Chunk c = Instantiate(chunkPrefab);
 			c.gameObject.SetActive(false);
@@ -183,7 +185,7 @@ public class ChunkManager : MonoBehaviour
 
 		while (true)
 		{
-			Thread.Sleep(30);
+			Thread.Sleep(1);
 			visiblePoints.Clear();
 
 			Vector2Int cameraChunkPos;
@@ -192,9 +194,9 @@ public class ChunkManager : MonoBehaviour
 			Vector3 cameraForwardFloor = cameraForward;
 			cameraForwardFloor.y = 0;
 			cameraForwardFloor.Normalize();
-			for (int y = 0; y < 32; ++y)
+			for (int y = 0; y < renderDistance*2; ++y)
 			{
-				for (int x = 0; x < 32; ++x)
+				for (int x = 0; x < renderDistance*2; ++x)
 				{
 					Vector2Int c = cameraChunkPos - new Vector2Int(16, 16) + new Vector2Int(x, y);
 					Vector3 renderPosition = new Vector3(c.x * 16,0, c.y * 16);
@@ -221,7 +223,7 @@ public class ChunkManager : MonoBehaviour
 	{
 		while (true)
 		{
-			Thread.Sleep(30);
+			Thread.Sleep(1);
 			lock (calculateShouldRenderLock)
 			{
 				Vector2Int cameraChunkPosition = new Vector2Int(
