@@ -6,17 +6,17 @@ public class ChunkDataManager
 	public Dictionary<Vector2Int, ChunkData> data;
 	public TextureMapper textureMapper;
 
-	private List<ChunkData> renderQueue;
-	private List<ChunkData> applyingChangesQueue;
-	private List<ChunkData> dirtyChunks;
+	private List<Vector2Int> renderQueue;
+	private List<Vector2Int> applyingChangesQueue;
+	private List<Vector2Int> dirtyChunks;
 
 	public ChunkDataManager()
 	{
 		data = new Dictionary<Vector2Int, ChunkData>();
 		textureMapper = new TextureMapper();
-		renderQueue = new List<ChunkData>();
-		applyingChangesQueue = new List<ChunkData>();
-		dirtyChunks = new List<ChunkData>();
+		renderQueue = new List<Vector2Int>();
+		applyingChangesQueue = new List<Vector2Int>();
+		dirtyChunks = new List<Vector2Int>();
 	}
 
 	public void Update()
@@ -24,7 +24,7 @@ public class ChunkDataManager
 		if (renderQueue.Count > 0)
 		{
 			//only process first one
-			ChunkData chunkData = renderQueue[0];
+			ChunkData chunkData = data[renderQueue[0]];
 			Vector2Int position = chunkData.position;
 			if (!chunkData.startedLoadingStructures)
 			{
@@ -47,14 +47,14 @@ public class ChunkDataManager
 			{
 				if (chunkData.structuresReady)
 				{
-					applyingChangesQueue.Add(chunkData);
+					applyingChangesQueue.Add(chunkData.position);
 					renderQueue.RemoveAt(0);
 				}
 			}
 		}
 		if (applyingChangesQueue.Count > 0)
 		{
-			ChunkData chunkData = applyingChangesQueue[0];
+			ChunkData chunkData = data[applyingChangesQueue[0]];
 			if (chunkData.chunkReady)
 			{
 				applyingChangesQueue.RemoveAt(0);
@@ -62,8 +62,9 @@ public class ChunkDataManager
 		}
 		if (dirtyChunks.Count > 0)
 		{
-			SaveDataManager.instance.Save(dirtyChunks[0].saveData);
-			dirtyChunks[0].isDirty = false;
+			ChunkData dirtyChunk = data[dirtyChunks[0]];
+			SaveDataManager.instance.Save(dirtyChunk.saveData);
+			dirtyChunk.isDirty = false;
 			dirtyChunks.RemoveAt(0);
 		}
 		World.activeWorld.debugText.text += $" / Chunks in Memory: {data.Count}";
@@ -77,16 +78,16 @@ public class ChunkDataManager
 			if (!chunkData.chunkReady)
 			{
 				//data exists but is either still loading terrain, placing structures or applying user changes
-				if (applyingChangesQueue.Contains(chunkData))
+				if (applyingChangesQueue.Contains(chunkData.position))
 				{
 					//already final stages of being ready, currently applying user changes;
 					return false;
 				}
-				if (!renderQueue.Contains(chunkData))
+				if (!renderQueue.Contains(chunkData.position))
 				{
 					//only flagged for terrain loading, add to renderQueue to start loading structures/terrain
 					//load terrain data for neighbors if they don't exist yet
-					renderQueue.Add(chunkData);
+					renderQueue.Add(chunkData.position);
 					StartChunkLoadingIfNecessary(chunk + new Vector2Int(1, 0));
 					StartChunkLoadingIfNecessary(chunk + new Vector2Int(-1, 0));
 					StartChunkLoadingIfNecessary(chunk + new Vector2Int(0, 1));
@@ -105,7 +106,7 @@ public class ChunkDataManager
 		else
 		{
 			ChunkData chunkData = StartChunkLoadingIfNecessary(chunk);
-			renderQueue.Add(chunkData);
+			renderQueue.Add(chunkData.position);
 			StartChunkLoadingIfNecessary(chunk + new Vector2Int(1, 0));
 			StartChunkLoadingIfNecessary(chunk + new Vector2Int(-1, 0));
 			StartChunkLoadingIfNecessary(chunk + new Vector2Int(0, 1));
@@ -157,6 +158,6 @@ public class ChunkDataManager
 	{
 		data[chunk].Modify(x, y, z, blockType);
 		data[chunk].isDirty = true;
-		dirtyChunks.Add(data[chunk]);
+		dirtyChunks.Add(data[chunk].position);
 	}
 }

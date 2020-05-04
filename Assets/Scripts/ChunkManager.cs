@@ -136,7 +136,7 @@ public class ChunkManager : MonoBehaviour
 			}
 			chunkToUnload.Unload();
 			chunkPool.Enqueue(chunkToUnload);
-			chunkDataManager.data.Remove(shouldUnloadPosition);
+			//chunkDataManager.data.Remove(shouldUnloadPosition);
 		}
 
 		World.activeWorld.debugText.text += $" / Active chunks: {activeChunks.Count}";

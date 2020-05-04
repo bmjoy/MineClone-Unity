@@ -23,7 +23,7 @@ public class ChunkData
 
 	public ChunkSaveData saveData;
 
-	private ChunkData front, left, back, right; //neighbours for structure loading
+	private ChunkData front, left, back, right; //neighbours (only exist while loading structures)
 
 	public struct StructureInfo
 	{
@@ -63,6 +63,7 @@ public class ChunkData
 	public void StartStructuresLoading(ChunkData front, ChunkData left, ChunkData back, ChunkData right)
 	{
 		Debug.Log($"Chunk {position} start structure loading");
+		//need to temporarily cache chunkdata of neighbors since generation is on another thread
 		this.front = front;
 		this.left = left;
 		this.right = right;
@@ -251,14 +252,12 @@ public class ChunkData
 	{
 		//load structures
 		
-
-
-
-
+		//remove all references to neighbors to avoid them staying in memory when unloading chunks
 		front = null;
 		left = null;
 		right = null;
 		back = null;
+
 		structuresReady = true;
 		Debug.Log($"Chunk {position} structures ready");
 
