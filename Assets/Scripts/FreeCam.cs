@@ -6,7 +6,8 @@ public class FreeCam : MonoBehaviour
 {
 	Vector3 euler = new Vector3();
 	public World world;
-    void Start()
+	[SerializeField] private GameObject highlightPrefab;
+	void Start()
     {
 		Cursor.lockState = CursorLockMode.Locked;
     }
@@ -67,7 +68,12 @@ public class FreeCam : MonoBehaviour
 			{
 				world.Modify(placeBlock.x, placeBlock.y, placeBlock.z, BlockTypes.LEAVES_OAK);
 			}
+
+			highlightPrefab.transform.position = removeBlock + new Vector3(.5f, .5f, .5f);
+			highlightPrefab.SetActive(true);
+		} else {
+			highlightPrefab.SetActive(false);
 		}
 
-    }
+	}
 }
