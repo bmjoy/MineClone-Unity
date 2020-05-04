@@ -66,6 +66,7 @@ public class ChunkDataManager
 			dirtyChunks[0].isDirty = false;
 			dirtyChunks.RemoveAt(0);
 		}
+		World.activeWorld.debugText.text += $" / Chunks in Memory: {data.Count}";
 	}
 
 	public bool CanRender(Vector2Int chunk)

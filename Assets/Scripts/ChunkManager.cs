@@ -29,12 +29,11 @@ public class ChunkManager : MonoBehaviour
 	private Vector3 cameraForward;
 
 	//ShouldRender thread
-	private Thread calculateShouldRenderThread;
-	private System.Object shouldGenerateQueueLock = new System.Object();
-	private List<Vector2Int> shouldGenerate;
+	private Thread shouldRenderThread;
+	private System.Object shouldRenderLock = new System.Object();
+	private List<Vector2Int> shouldRender;
 
-	//ShouldUnload thread
-	private Thread shouldUnloadThread;
+	//should unload
 	private System.Object shouldUnloadQueueLock = new System.Object();
 	private Queue<Vector2Int> shouldUnloadQueue;
 
@@ -45,10 +44,8 @@ public class ChunkManager : MonoBehaviour
 		chunkMap = new Dictionary<Vector2Int, Chunk>();
 		chunkPool = new Queue<Chunk>();
 		activeChunks = new List<Vector2Int>();
-		//shouldRender = new List<Vector2Int>();
-		shouldGenerate = new List<Vector2Int>();
+		shouldRender = new List<Vector2Int>();
 		shouldUnloadQueue = new Queue<Vector2Int>();
-		//generateBuildQueue = new Queue<Vector2Int>();
 		modifiedRebuildQueue = new Queue<Vector2Int>();
 		int chunkPoolSize = renderDistance * renderDistance * 4;
 		Debug.Log("Chunk pool size: " + chunkPoolSize);
@@ -61,13 +58,9 @@ public class ChunkManager : MonoBehaviour
 			c.transform.SetParent(chunkPrefab.transform.parent);
 		}
 
-		calculateShouldRenderThread = new Thread(CalculateShouldRenderThread);
-		calculateShouldRenderThread.IsBackground = true;
-		calculateShouldRenderThread.Start();
-
-		shouldUnloadThread = new Thread(ShouldUnloadThread);
-		shouldUnloadThread.IsBackground = true;
-		shouldUnloadThread.Start();
+		shouldRenderThread = new Thread(ShouldRenderThread);
+		shouldRenderThread.IsBackground = true;
+		shouldRenderThread.Start();
 	}
 
 	public void UpdateChunks(Camera mainCamera)
@@ -91,15 +84,14 @@ public class ChunkManager : MonoBehaviour
 		}
 		else
 		{
-			Vector2Int shouldGeneratePosition = Vector2Int.zero;
-			lock (shouldGenerateQueueLock)
+			lock (shouldRenderLock)
 			{
-				for (int i = 0; i < shouldGenerate.Count; ++i)
+				for (int i = 0; i < shouldRender.Count; ++i)
 				{
-					shouldGeneratePosition = shouldGenerate[i];
+					Vector2Int shouldGeneratePosition = shouldRender[i];
 					if (chunkDataManager.CanRender(shouldGeneratePosition))
 					{
-						shouldGenerate.RemoveAt(i);
+						shouldRender.RemoveAt(i);
 						Chunk chunk = null;
 						lock (chunkMap)
 						{
@@ -117,26 +109,21 @@ public class ChunkManager : MonoBehaviour
 						break;
 					}
 				}
-
 			}
 		}
 
-		bool shouldUnload = false;
 		Vector2Int shouldUnloadPosition = Vector2Int.zero;
-		lock (shouldUnloadQueueLock)
+		while (true)//loop until everything is unloaded
 		{
-			if (shouldUnloadQueue.Count > 0)
+			lock (shouldUnloadQueueLock)
 			{
+				if (shouldUnloadQueue.Count == 0) break;
 				shouldUnloadPosition = shouldUnloadQueue.Dequeue();
-				shouldUnload = true;
 			}
-		}
-		lock (chunkMapLock)
-		{
-			if (!chunkMap.ContainsKey(shouldUnloadPosition)) shouldUnload = false;
-		}
-		if (shouldUnload)
-		{
+			lock (chunkMapLock)
+			{
+				if (!chunkMap.ContainsKey(shouldUnloadPosition)) continue;
+			}
 			lock (activeChunks)
 			{
 				activeChunks.Remove(shouldUnloadPosition);
@@ -150,14 +137,17 @@ public class ChunkManager : MonoBehaviour
 			chunkToUnload.Unload();
 			chunkPool.Enqueue(chunkToUnload);
 			chunkDataManager.data.Remove(shouldUnloadPosition);
-			//System.GC.Collect();
 		}
+
+		World.activeWorld.debugText.text += $" / Active chunks: {activeChunks.Count}";
+
 	}
 
-	private void CalculateShouldRenderThread()
+	private void ShouldRenderThread()
 	{
 		List<Vector2Int> visiblePoints = new List<Vector2Int>();
-
+		List<Vector2Int> farAwayPoints = new List<Vector2Int>();
+		List<Vector2Int> reallyFarAwayPoints = new List<Vector2Int>();
 		while (true)
 		{
 			Thread.Sleep(8);
@@ -197,11 +187,11 @@ public class ChunkManager : MonoBehaviour
 				{
 					if (Vector2Int.Distance(pos, cameraChunkPos) < renderDistance)
 					{
-						lock (shouldGenerateQueueLock)
+						lock (shouldRenderLock)
 						{
-							if (shouldGenerate.Count < 16 && !shouldGenerate.Contains(pos))
+							if (shouldRender.Count < 16 && !shouldRender.Contains(pos))
 							{
-								shouldGenerate.Add(pos);
+								shouldRender.Add(pos);
 							}
 						}
 						break;
@@ -209,42 +199,46 @@ public class ChunkManager : MonoBehaviour
 					
 				}
 			}
-			Debug.Log("Should generate took " + (System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - startTime) + " MS");
-		}
-	}
 
-	private void ShouldUnloadThread()
-	{
-		while (true)
-		{
-			Thread.Sleep(5);
-			Vector2Int cameraChunkPosition = new Vector2Int(
-					(int)cameraPosition.x / 16,
-					(int)cameraPosition.z / 16);
-			bool shouldUnload = false;
-			Vector2Int chunkPosition = Vector2Int.zero;
 			lock (activeChunksLock)
 			{
 				for (int i = 0; i < activeChunks.Count; ++i)
 				{
-					if (Vector2Int.Distance(cameraChunkPosition, activeChunks[i]) > renderDistance)
+					if (Vector2Int.Distance(cameraChunkPos, activeChunks[i]) > renderDistance)
 					{
-						shouldUnload = true;
-						chunkPosition = activeChunks[i];
-						break;
+						farAwayPoints.Add(activeChunks[i]);
 					}
 				}
 			}
-			if (shouldUnload)
+
+			lock (shouldRenderLock)
 			{
-				lock (shouldUnloadQueueLock)
+				for (int i = farAwayPoints.Count - 1; i > -1; --i)
 				{
-					if (!shouldUnloadQueue.Contains(chunkPosition))
+					bool isStillNeededForOtherChunks = false;
+					isStillNeededForOtherChunks |= shouldRender.Contains(farAwayPoints[i]);
+					isStillNeededForOtherChunks |= shouldRender.Contains(farAwayPoints[i] + new Vector2Int(1, 0));
+					isStillNeededForOtherChunks |= shouldRender.Contains(farAwayPoints[i] + new Vector2Int(-1, 0));
+					isStillNeededForOtherChunks |= shouldRender.Contains(farAwayPoints[i] + new Vector2Int(0, 1));
+					isStillNeededForOtherChunks |= shouldRender.Contains(farAwayPoints[i] + new Vector2Int(0, -1));
+					if(isStillNeededForOtherChunks)
 					{
-						shouldUnloadQueue.Enqueue(chunkPosition);
+						farAwayPoints.RemoveAt(i);
 					}
 				}
 			}
+
+			lock (shouldUnloadQueueLock)
+			{
+				for (int i = 0; i < farAwayPoints.Count; ++i)
+				{
+					if (!shouldUnloadQueue.Contains(farAwayPoints[i]))
+					{
+						shouldUnloadQueue.Enqueue(farAwayPoints[i]);
+					}
+				}
+			}
+			
 		}
 	}
 
@@ -253,7 +247,6 @@ public class ChunkManager : MonoBehaviour
 		Debug.Log($"Chunk {chunk} Modifying {x} {y} {z} {blockType}");
 		if (!chunkMap.ContainsKey(chunk)) throw new System.Exception("Chunk is not available");
 		chunkDataManager.Modify(chunk, x, y, z, blockType);
-		//chunkDataManager.data[chunk].Modify(x, y, z, blockType);
 		chunkMap[chunk].Build(chunkDataManager);
 		if (x == 15) modifiedRebuildQueue.Enqueue(chunk + new Vector2Int(1, 0));
 		if (x == 0) modifiedRebuildQueue.Enqueue(chunk + new Vector2Int(-1, 0));
@@ -263,9 +256,7 @@ public class ChunkManager : MonoBehaviour
 
 	private void OnDestroy()
 	{
-		calculateShouldRenderThread.Abort();
-		//shouldGenerateThread.Abort();
-		shouldUnloadThread.Abort();
+		shouldRenderThread.Abort();
 		Thread.Sleep(30);
 	}
 }

@@ -10,6 +10,7 @@ public class World : MonoBehaviour
 	public ChunkManager chunkManager;
 	private bool didModifyThisFrame = false;
 	private bool initialized = false;
+	public TMPro.TextMeshProUGUI debugText;
 	public void Initialize(WorldInfo info)
 	{
 		this.info = info;
@@ -23,6 +24,7 @@ public class World : MonoBehaviour
 	void LateUpdate()
     {
 		if (!initialized) return;
+		debugText.text = "Seed: "+info.seed;
 		//update chunks if no modifications have happened this frame
 		//only rebuild 1 chunk per frame to avoid framedrops
 		if(!didModifyThisFrame) chunkManager.UpdateChunks(mainCamera);

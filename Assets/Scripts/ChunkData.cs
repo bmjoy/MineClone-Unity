@@ -182,7 +182,7 @@ public class ChunkData
 
 		string h = World.activeWorld.info.seed.ToString() + position.x.ToString() + position.y.ToString();
 		int structuresSeed = h.GetHashCode();
-		Debug.Log("Chunk structures seed is " + structuresSeed);
+		//Debug.Log("Chunk structures seed is " + structuresSeed);
 		System.Random rnd = new System.Random(structuresSeed);
 		structures = new List<StructureInfo>();
 		bool[,] spotsTaken = new bool[16, 16];
