@@ -13,7 +13,7 @@ public class ChunkManager : MonoBehaviour
 	private int[,] surroundingArea;
 	
 	private Queue<Chunk> chunkPool;
-	private Queue<Vector2Int> generateBuildQueue;
+	//private Queue<Vector2Int> generateBuildQueue;
 	private Queue<Vector2Int> modifiedRebuildQueue;
 
 	//active chunks
@@ -30,13 +30,8 @@ public class ChunkManager : MonoBehaviour
 
 	//ShouldRender thread
 	private Thread calculateShouldRenderThread;
-	private List<Vector2Int> shouldRender;
-	private System.Object calculateShouldRenderLock = new System.Object();
-	
-	//ShouldGenerate thread
-	private Thread shouldGenerateThread;
 	private System.Object shouldGenerateQueueLock = new System.Object();
-	private Queue<Vector2Int> shouldGenerateQueue;
+	private List<Vector2Int> shouldGenerate;
 
 	//ShouldUnload thread
 	private Thread shouldUnloadThread;
@@ -50,10 +45,10 @@ public class ChunkManager : MonoBehaviour
 		chunkMap = new Dictionary<Vector2Int, Chunk>();
 		chunkPool = new Queue<Chunk>();
 		activeChunks = new List<Vector2Int>();
-		shouldRender = new List<Vector2Int>();
-		shouldGenerateQueue = new Queue<Vector2Int>();
+		//shouldRender = new List<Vector2Int>();
+		shouldGenerate = new List<Vector2Int>();
 		shouldUnloadQueue = new Queue<Vector2Int>();
-		generateBuildQueue = new Queue<Vector2Int>();
+		//generateBuildQueue = new Queue<Vector2Int>();
 		modifiedRebuildQueue = new Queue<Vector2Int>();
 		int chunkPoolSize = renderDistance * renderDistance * 4;
 		Debug.Log("Chunk pool size: " + chunkPoolSize);
@@ -70,10 +65,6 @@ public class ChunkManager : MonoBehaviour
 		calculateShouldRenderThread.IsBackground = true;
 		calculateShouldRenderThread.Start();
 
-		shouldGenerateThread = new Thread(ShouldGenerateThread);
-		shouldGenerateThread.IsBackground = true;
-		shouldGenerateThread.Start();
-
 		shouldUnloadThread = new Thread(ShouldUnloadThread);
 		shouldUnloadThread.IsBackground = true;
 		shouldUnloadThread.Start();
@@ -87,33 +78,47 @@ public class ChunkManager : MonoBehaviour
 		cameraPosition = mainCamera.transform.position;
 		cameraForward = mainCamera.transform.forward;
 
-
-		bool shouldGenerate = false;
-		Vector2Int shouldGeneratePosition=Vector2Int.zero;
-		lock (shouldGenerateQueueLock)
+		if (modifiedRebuildQueue.Count > 0)
 		{
-			if (shouldGenerateQueue.Count > 0)
+			Vector2Int chunkToRebuild = modifiedRebuildQueue.Dequeue();
+			lock (chunkMapLock)
 			{
-				shouldGeneratePosition = shouldGenerateQueue.Peek();
-				if (chunkDataManager.CanRender(shouldGeneratePosition))
+				if (chunkMap.ContainsKey(chunkToRebuild))
 				{
-					Debug.Log($"Chunk {shouldGeneratePosition} can render. Adding to build queue");
-					shouldGenerateQueue.Dequeue(); // actually dequeue if can render
-					shouldGenerate = true;
+					chunkMap[chunkToRebuild].Build(chunkDataManager);
 				}
 			}
 		}
-		lock (chunkMapLock)
+		else
 		{
-			if (chunkMap.ContainsKey(shouldGeneratePosition)) shouldGenerate = false;
-		}
-		if (shouldGenerate)
-		{
-			Chunk chunk = chunkPool.Dequeue();
-			chunk.Initialize(shouldGeneratePosition);
-			chunkMap.Add(shouldGeneratePosition, chunk);
-			generateBuildQueue.Enqueue(shouldGeneratePosition);
+			Vector2Int shouldGeneratePosition = Vector2Int.zero;
+			lock (shouldGenerateQueueLock)
+			{
+				for (int i = 0; i < shouldGenerate.Count; ++i)
+				{
+					shouldGeneratePosition = shouldGenerate[i];
+					if (chunkDataManager.CanRender(shouldGeneratePosition))
+					{
+						shouldGenerate.RemoveAt(i);
+						Chunk chunk = null;
+						lock (chunkMap)
+						{
+							if (chunkMap.ContainsKey(shouldGeneratePosition)) break; //already present
+							chunk = chunkPool.Dequeue();
+							chunk.Initialize(shouldGeneratePosition);
+							chunkMap.Add(shouldGeneratePosition, chunk);
+						}
+						Debug.Log($"Chunk {shouldGeneratePosition} can render. Adding to build queue");
+						chunk.Build(chunkDataManager);
+						lock (activeChunksLock)
+						{
+							activeChunks.Add(shouldGeneratePosition);
+						}
+						break;
+					}
+				}
 
+			}
 		}
 
 		bool shouldUnload = false;
@@ -147,43 +152,6 @@ public class ChunkManager : MonoBehaviour
 			chunkDataManager.data.Remove(shouldUnloadPosition);
 			//System.GC.Collect();
 		}
-
-		if (modifiedRebuildQueue.Count > 0)
-		{
-			Vector2Int chunkToRebuild = modifiedRebuildQueue.Dequeue();
-			lock (chunkMapLock)
-			{
-				if (chunkMap.ContainsKey(chunkToRebuild))
-				{
-					chunkMap[chunkToRebuild].Build(chunkDataManager);
-				}
-			}
-		}
-		else
-		{
-			if (generateBuildQueue.Count > 0)
-			{
-				Vector2Int chunkToBuild = generateBuildQueue.Dequeue();
-				Chunk chunk=null;
-				lock (chunkMapLock)
-				{
-					if (chunkMap.ContainsKey(chunkToBuild))
-					{
-						chunk = chunkMap[chunkToBuild];
-					}
-				}
-				if (chunk!=null)
-				{
-					chunk.Build(chunkDataManager);
-					lock (activeChunksLock)
-					{
-						activeChunks.Add(shouldGeneratePosition);
-					}
-				}
-			}
-		}
-
-		
 	}
 
 	private void CalculateShouldRenderThread()
@@ -193,6 +161,7 @@ public class ChunkManager : MonoBehaviour
 		while (true)
 		{
 			Thread.Sleep(8);
+			long startTime = System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 			visiblePoints.Clear();
 
 			Vector2Int cameraChunkPos;
@@ -215,49 +184,32 @@ public class ChunkManager : MonoBehaviour
 
 			Vector2Int[] ordered = visiblePoints.OrderBy(vp => Vector2Int.Distance(cameraChunkPos, vp)).ToArray();
 
-			lock (calculateShouldRenderLock)
-			{
-				shouldRender.Clear();
-				for (int i = 0; i < ordered.Count(); ++i)
-				{
-					shouldRender.Add(ordered.ElementAt(i));
-				}
-			}
-		}
-	}
 
-	private void ShouldGenerateThread()
-	{
-		while (true)
-		{
-			Thread.Sleep(8);
-			lock (calculateShouldRenderLock)
+			for (int i = 0; i < ordered.Length; ++i)
 			{
-				Vector2Int cameraChunkPosition = new Vector2Int(
-					(int)cameraPosition.x / 16,
-					(int)cameraPosition.z / 16);
-				for (int i = 0; i < shouldRender.Count; ++i)
+				Vector2Int pos = ordered[i];
+				bool alreadyPresent = false;
+				lock (chunkMapLock)
 				{
-					Vector2Int pos = shouldRender[i];
-					lock (chunkMapLock)
+					alreadyPresent = chunkMap.ContainsKey(pos);
+				}
+				if(!alreadyPresent)
+				{
+					if (Vector2Int.Distance(pos, cameraChunkPos) < renderDistance)
 					{
-						if (!chunkMap.ContainsKey(pos))
+						lock (shouldGenerateQueueLock)
 						{
-							if (Vector2Int.Distance(pos, cameraChunkPosition) < renderDistance)
+							if (shouldGenerate.Count < 16 && !shouldGenerate.Contains(pos))
 							{
-								lock (shouldGenerateQueueLock)
-								{
-									if (shouldGenerateQueue.Count < 2)
-									{
-										shouldGenerateQueue.Enqueue(pos);
-									}
-								}
-								break;
+								shouldGenerate.Add(pos);
 							}
 						}
+						break;
 					}
+					
 				}
 			}
+			Debug.Log("Should generate took " + (System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - startTime) + " MS");
 		}
 	}
 
@@ -312,7 +264,7 @@ public class ChunkManager : MonoBehaviour
 	private void OnDestroy()
 	{
 		calculateShouldRenderThread.Abort();
-		shouldGenerateThread.Abort();
+		//shouldGenerateThread.Abort();
 		shouldUnloadThread.Abort();
 		Thread.Sleep(30);
 	}
