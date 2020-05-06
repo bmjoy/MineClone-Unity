@@ -64,7 +64,7 @@ public class SaveDataManager
 
 	private void ReadChunk(FileInfo file, ChunkSaveData saveData)
 	{
-		while (busy) System.Threading.Thread.Sleep(4);
+		//while (busy) System.Threading.Thread.Sleep(4);
 		busy = true;
 		byte[] buffer = new byte[4];
 		using (FileStream stream = new FileStream(file.FullName, FileMode.Open))
@@ -80,7 +80,7 @@ public class SaveDataManager
 
 	private void WriteChunk(FileInfo file, ChunkSaveData saveData)
 	{
-		while (busy) System.Threading.Thread.Sleep(4);
+		//while (busy) System.Threading.Thread.Sleep(4);
 		busy = true;
 		byte[] buffer = new byte[4];
 		using (FileStream stream = new FileStream(file.FullName, FileMode.Create))

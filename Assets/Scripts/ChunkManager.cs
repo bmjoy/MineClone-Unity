@@ -9,7 +9,8 @@ public class ChunkManager : MonoBehaviour
 	public Chunk chunkPrefab;
 	private ChunkDataManager chunkDataManager;
 
-	public int renderDistance = 16;
+	private int renderDistance;
+	private int maximumLoadQueueSize;
 	private int[,] surroundingArea;
 	
 	private Queue<Chunk> chunkPool;
@@ -30,6 +31,9 @@ public class ChunkManager : MonoBehaviour
 
 	public void Initialize()
 	{
+		renderDistance = GameManager.instance.gameSettings.RenderDistance;
+		maximumLoadQueueSize = GameManager.instance.gameSettings.maximumLoadQueueSize;
+
 		surroundingArea = new int[renderDistance*2, renderDistance*2];
 		chunkDataManager = new ChunkDataManager();
 		chunkMap = new Dictionary<Vector2Int, Chunk>();
@@ -49,6 +53,8 @@ public class ChunkManager : MonoBehaviour
 			c.transform.SetParent(chunkPrefab.transform.parent);
 		}
 
+		
+
 		shouldRenderThread = new Thread(ShouldRenderThread);
 		shouldRenderThread.IsBackground = true;
 		shouldRenderThread.Start();
@@ -56,9 +62,7 @@ public class ChunkManager : MonoBehaviour
 
 	public void UpdateChunks(Camera mainCamera)
 	{
-//#if UNITY_EDITOR
 		UnityEngine.Profiling.Profiler.BeginSample("UPDATING CHUNKS");
-//#endif
 		//Debug.Log("Active chunks: " + activeChunks.Count);
 		chunkDataManager.Update();
 
@@ -67,9 +71,7 @@ public class ChunkManager : MonoBehaviour
 
 		int loadQueueCount = 0;
 
-//#if UNITY_EDITOR
 		UnityEngine.Profiling.Profiler.BeginSample("LOCK SHOULD RENDER");
-//#endif
 
 		lock (shouldRenderLock)
 		{
@@ -78,25 +80,19 @@ public class ChunkManager : MonoBehaviour
 			if (modifiedRebuildQueue.Count > 0)
 			{
 
-//#if UNITY_EDITOR
 				UnityEngine.Profiling.Profiler.BeginSample("MODIFY CHUNK");
-//#endif
 				Vector2Int position = modifiedRebuildQueue.Dequeue();
 				if (activeChunks.Contains(position))
 				{
 					chunkMap[position].Build(chunkDataManager);
 				}
-//#if UNITY_EDITOR
 				UnityEngine.Profiling.Profiler.EndSample();
-//#endif
 
 			}
 			else
 			{
 
-//#if UNITY_EDITOR
 				UnityEngine.Profiling.Profiler.BeginSample("UNLOADING");
-//#endif
 				while (true)//loop until everything is unloaded
 				{
 
@@ -114,13 +110,9 @@ public class ChunkManager : MonoBehaviour
 					chunkMap.Remove(position);
 					chunkDataManager.UnloadChunk(position);
 				}
-//#if UNITY_EDITOR
 				UnityEngine.Profiling.Profiler.EndSample();
-//#endif
 
-//#if UNITY_EDITOR
 				UnityEngine.Profiling.Profiler.BeginSample("BUILD CHUNK CHECK");
-//#endif
 
 				bool buildChunk = false;
 				Vector2Int chunkToBuild = Vector2Int.zero;
@@ -138,13 +130,9 @@ public class ChunkManager : MonoBehaviour
 					}
 				}
 
-//#if UNITY_EDITOR
 				UnityEngine.Profiling.Profiler.EndSample();
-//#endif
 
-//#if UNITY_EDITOR
 				UnityEngine.Profiling.Profiler.BeginSample("BUILD CHUNK");
-//#endif
 
 				if (buildChunk)
 				{
@@ -160,21 +148,16 @@ public class ChunkManager : MonoBehaviour
 					}
 				}
 
-//#if UNITY_EDITOR
 				UnityEngine.Profiling.Profiler.EndSample();
-//#endif
+
 			}
 		}
 		shouldRenderWaitForUpdate = false;
-//#if UNITY_EDITOR
 		UnityEngine.Profiling.Profiler.EndSample();
-//#endif
 		int activeChunksCount = activeChunks.Count;
 		int chunksInMemoryCount = chunkDataManager.GetChunksInMemoryCount();
 		World.activeWorld.debugText.text += $" / Chunks (Q {loadQueueCount}/A {activeChunksCount}/M {chunksInMemoryCount})";
-//#if UNITY_EDITOR
 		UnityEngine.Profiling.Profiler.EndSample();
-//#endif
 	}
 
 	private void ShouldRenderThread()
@@ -205,7 +188,7 @@ public class ChunkManager : MonoBehaviour
 					Vector3 toChunk = renderPosition - cameraPositionFloor;
 
 					bool inRange = toChunk.magnitude < (renderDistance * 16);
-					bool inAngle = Vector3.Angle(toChunk, cameraForwardFloor) < 90;
+					bool inAngle = Vector3.Angle(toChunk, cameraForwardFloor) < 70;
 					bool isClose = toChunk.magnitude < (16 * 3);
 					if (inRange) inRangePoints.Add(c);
 					if ((inAngle && inRange) || isClose) visiblePoints.Add(c) ;
@@ -226,7 +209,7 @@ public class ChunkManager : MonoBehaviour
 					copyOfActiveChunks.Add(activeChunks[i]);
 				}
 			}
-			Debug.Log($"Locked main thread for {TimeStamp() - startTime} MS to copy active chunk list");
+			//Debug.Log($"Locked main thread for {TimeStamp() - startTime} MS to copy active chunk list");
 
 			for (int i = copyOfActiveChunks.Count-1; i >-1; --i)
 			{
@@ -239,7 +222,7 @@ public class ChunkManager : MonoBehaviour
 
 			for (int i = 0; i < ordered.Count; ++i)
 			{
-				if (copyOfLoad.Count == 8) break;
+				if (copyOfLoad.Count == maximumLoadQueueSize) break;
 				Vector2Int position = ordered[i];
 				if (!copyOfActiveChunks.Contains(position))
 				{
@@ -256,7 +239,7 @@ public class ChunkManager : MonoBehaviour
 				}
 				while (copyOfLoad.Count > 0)
 				{
-					if (loadQueue.Count == 8) break;
+					if (loadQueue.Count == maximumLoadQueueSize) break;
 					Vector2Int position = copyOfLoad.Dequeue();
 					if (!loadQueue.Contains(position))
 					{
@@ -264,7 +247,7 @@ public class ChunkManager : MonoBehaviour
 					}
 				}
 			}
-			Debug.Log($"Locked main thread for {TimeStamp() - startTime} MS to schedule loading");
+			//Debug.Log($"Locked main thread for {TimeStamp() - startTime} MS to schedule loading");
 		}
 	}
 

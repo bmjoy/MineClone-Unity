@@ -84,7 +84,7 @@ public class Player : MonoBehaviour
 		RaycastHit hitInfo;
 		if (Physics.Raycast(mainCamera.transform.position, mainCamera.transform.forward, out hitInfo, 5, layerMask))
 		{
-			Debug.Log(hitInfo.collider.gameObject.name);
+			//Debug.Log(hitInfo.collider.gameObject.name);
 			Vector3 inCube = hitInfo.point - (hitInfo.normal * 0.5f);
 			Vector3Int removeBlock = new Vector3Int(
 				Mathf.FloorToInt(inCube.x),
