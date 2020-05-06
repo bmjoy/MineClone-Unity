@@ -256,11 +256,12 @@ public class ChunkManager : MonoBehaviour
 		Debug.Log($"Chunk {chunk} Modifying {x} {y} {z} {blockType}");
 		if (!chunkMap.ContainsKey(chunk)) throw new System.Exception("Chunk is not available");
 		chunkDataManager.Modify(chunk, x, y, z, blockType);
-		chunkMap[chunk].Build(chunkDataManager);
 		if (x == 15) modifiedRebuildQueue.Enqueue(chunk + new Vector2Int(1, 0));
 		if (x == 0) modifiedRebuildQueue.Enqueue(chunk + new Vector2Int(-1, 0));
 		if (z == 15) modifiedRebuildQueue.Enqueue(chunk + new Vector2Int(0, 1));
 		if (z == 0) modifiedRebuildQueue.Enqueue(chunk + new Vector2Int(0, -1));
+		modifiedRebuildQueue.Enqueue(chunk);
+		//chunkMap[chunk].Build(chunkDataManager);
 	}
 
 	private void OnDestroy()

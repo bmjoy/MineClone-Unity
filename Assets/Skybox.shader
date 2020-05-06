@@ -1,13 +1,5 @@
 ﻿Shader "Unlit/Skybox"
 {
-	Properties 
-	{
-		_ColorTop ("Color Top", Color) = (1,1,1,1)
-		_ColorHorizon("Color Horizon", Color) = (0,0,1,1)
-		_ColorBottom("Color Bottom", Color) = (0,0,0,1)
-
-	}
-
 	SubShader 
 	{
 		Tags { "Queue"="Background" "RenderType"="Background" "PreviewType"="Skybox" }
@@ -38,20 +30,20 @@
 				return o;
 			}
 			uniform fixed4 _ColorHorizon, _ColorTop, _ColorBottom;
+
+			fixed4 GetSkyColor(float3 viewDir)
+			{
+				float2 lat = atan2((abs(viewDir.y)), sqrt(viewDir.x*viewDir.x + viewDir.z*viewDir.z));
+				float height = pow(2 * lat / 3.141592, 1);
+				return lerp(_ColorHorizon, lerp(_ColorBottom, _ColorTop, saturate(sign(viewDir.y))), height);
+			}
+
 			fixed4 frag (v2f i) : SV_Target
 			{
-				float3 d = normalize(i.texcoord);
-				float height = pow( 2*atan2((abs(d.y)),sqrt(d.x*d.x + d.z*d.z))/3.141592,1);
-				fixed4 c2;
-				if (d.y > 0)
-				{
-					c2 = _ColorTop;
-				}
-				else {
-					c2 = _ColorBottom;
-				}
+				float3 viewDir = normalize(i.texcoord);
+				
 
-				return lerp(_ColorHorizon,c2,height);
+				return GetSkyColor(viewDir);
 			}
 			ENDCG
 		}

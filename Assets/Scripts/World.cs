@@ -27,7 +27,7 @@ public class World : MonoBehaviour
 		debugText.text = "Seed: "+info.seed;
 		//update chunks if no modifications have happened this frame
 		//only rebuild 1 chunk per frame to avoid framedrops
-		if(!didModifyThisFrame) chunkManager.UpdateChunks(mainCamera);
+		chunkManager.UpdateChunks(mainCamera);
 		didModifyThisFrame = false;
 	}
 
