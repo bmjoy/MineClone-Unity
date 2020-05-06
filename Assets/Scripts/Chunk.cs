@@ -37,20 +37,21 @@ public class Chunk : MonoBehaviour
 
 	public void Build(ChunkDataManager chunkDataManager)
 	{
-#if UNITY_EDITOR
+//#if UNITY_EDITOR
 		UnityEngine.Profiling.Profiler.BeginSample("BUILDING CHUNK");
-#endif
+//#endif
 		Vector2Int renderPosition = 16 * position;
 		transform.position = new Vector3(renderPosition.x, 0, renderPosition.y);
 		mesh.Clear();
 
+		//don't cache these byte references, only use them in this function
 		byte[,,] blockData = chunkDataManager.data[position].GetBlocks();
 		byte[,,] blockDataFront = chunkDataManager.data[position + new Vector2Int(0, 1)].GetBlocks();
 		byte[,,] blockDataBack = chunkDataManager.data[position + new Vector2Int(0, -1)].GetBlocks();
 		byte[,,] blockDataLeft = chunkDataManager.data[position + new Vector2Int(-1, 0)].GetBlocks();
 		byte[,,] blockDataRight = chunkDataManager.data[position + new Vector2Int(1, 0)].GetBlocks();
-		
 
+		UnityEngine.Profiling.Profiler.BeginSample("CREATING FACES");
 		for (int z = 0; z < 16; ++z)
 		{
 			for (int y = 0; y < 256; ++y)
@@ -152,6 +153,9 @@ public class Chunk : MonoBehaviour
 				}
 			}
 		}
+		UnityEngine.Profiling.Profiler.EndSample();
+
+		UnityEngine.Profiling.Profiler.BeginSample("APPLYING MESH DATA");
 		mesh.SetVertices(vertices);
 		mesh.SetTriangles(triangles, 0);
 		mesh.SetUVs(0, uvs);
@@ -164,10 +168,11 @@ public class Chunk : MonoBehaviour
 		uvs.Clear();
 		normals.Clear();
 		meshCollider.sharedMesh = mesh;
-
-#if UNITY_EDITOR
 		UnityEngine.Profiling.Profiler.EndSample();
-#endif
+
+		//#if UNITY_EDITOR
+		UnityEngine.Profiling.Profiler.EndSample();
+//#endif
 	}
 
 	private void AddFace(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 normal)

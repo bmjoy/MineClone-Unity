@@ -1240,7 +1240,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chunkPrefab: {fileID: 2043051141}
-  renderDistance: 8
+  renderDistance: 16
 --- !u!4 &2133775183
 Transform:
   m_ObjectHideFlags: 0

@@ -6,8 +6,7 @@ public class ChunkData
 	public Vector2Int position;
 	private byte[,,] blocks;
 	public bool terrainReady { get; private set; }
-	public bool startedLoadingStructures { get; private set; }
-	public bool structuresReady { get; private set; }
+	public bool startedLoadingDetails { get; private set; }
 	public bool chunkReady { get; private set; }
 
 	public bool isDirty;
@@ -16,8 +15,9 @@ public class ChunkData
 	const int STRUCTURE_CHANCE_TREE = (int.MaxValue / 100);
 
 	private Thread loadTerrainThread;
-	private Thread loadStructuresThread;
-	private Thread loadChangesThread;
+	private Thread loadDetailsThread;
+
+	public HashSet<Vector2Int> references;
 
 	public List<StructureInfo> structures;
 
@@ -40,10 +40,10 @@ public class ChunkData
 	{
 		this.position = position;
 		terrainReady = false;
-		startedLoadingStructures = false;
-		structuresReady = false;
+		startedLoadingDetails = false;
 		chunkReady = false;
 		isDirty = false;
+		references = new HashSet<Vector2Int>();
 	}
 
 	public byte[,,] GetBlocks()
@@ -54,25 +54,25 @@ public class ChunkData
 
 	public void StartTerrainLoading()
 	{
-		Debug.Log($"Chunk {position} start terrain loading");
+		//Debug.Log($"Chunk {position} start terrain loading");
 		loadTerrainThread = new Thread(LoadTerrain);
 		loadTerrainThread.IsBackground = true;
 		loadTerrainThread.Start();
 	}
 
-	public void StartStructuresLoading(ChunkData front, ChunkData left, ChunkData back, ChunkData right)
+	public void StartDetailsLoading(ChunkData front, ChunkData left, ChunkData back, ChunkData right)
 	{
-		Debug.Log($"Chunk {position} start structure loading");
+		//Debug.Log($"Chunk {position} start structure loading");
 		//need to temporarily cache chunkdata of neighbors since generation is on another thread
 		this.front = front;
 		this.left = left;
 		this.right = right;
 		this.back = back;
 
-		loadStructuresThread = new Thread(LoadStructures);
-		loadStructuresThread.IsBackground = true;
-		loadStructuresThread.Start();
-		startedLoadingStructures = true;
+		loadDetailsThread = new Thread(LoadDetails);
+		loadDetailsThread.IsBackground = true;
+		loadDetailsThread.Start();
+		startedLoadingDetails = true;
 	}
 
 	public void LoadTerrain() //also loads structures INFO
@@ -226,7 +226,7 @@ public class ChunkData
 		saveData = SaveDataManager.instance.Load(position);
 
 		terrainReady = true;
-		Debug.Log($"Chunk {position} terrain ready");
+		//Debug.Log($"Chunk {position} terrain ready");
 
 	}
 
@@ -248,7 +248,7 @@ public class ChunkData
 
 	}
 
-	private void LoadStructures()
+	private void LoadDetails()
 	{
 		//load structures
 		
@@ -258,17 +258,8 @@ public class ChunkData
 		right = null;
 		back = null;
 
-		structuresReady = true;
-		Debug.Log($"Chunk {position} structures ready");
+		//Debug.Log($"Chunk {position} structures ready");
 
-
-		loadChangesThread = new Thread(ApplyChanges);
-		loadChangesThread.IsBackground = true;
-		loadChangesThread.Start();
-	}
-
-	private void ApplyChanges()
-	{
 		//load changes
 		List<ChunkSaveData.C> changes = saveData.changes;
 		for (int i = 0; i < changes.Count; ++i)
@@ -279,7 +270,6 @@ public class ChunkData
 
 		chunkReady = true;
 		Debug.Log($"Chunk {position} ready");
-
 	}
 
 	public void Modify(int x, int y, int z, byte blockType)
@@ -287,5 +277,13 @@ public class ChunkData
 		if (!chunkReady) throw new System.Exception("Chunk has not finished loading");
 		saveData.changes.Add(new ChunkSaveData.C((byte)x, (byte)y, (byte)z, blockType));
 		blocks[x, y, z] = blockType;
+	}
+
+	public void Unload()
+	{
+		if (isDirty)
+		{
+			SaveDataManager.instance.Save(saveData);
+		}
 	}
 }
