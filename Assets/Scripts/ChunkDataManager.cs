@@ -127,9 +127,26 @@ public class ChunkDataManager
 
 	public void Modify(Vector2Int chunk, int x, int y, int z, byte blockType)
 	{
-		data[chunk].Modify(x, y, z, blockType);
-		data[chunk].isDirty = true;
-		dirtyChunks.Add(data[chunk].position);
+		ChunkData chunkData = data[chunk];
+		chunkData.Modify(x, y, z, blockType);
+		chunkData.isDirty = true;
+		dirtyChunks.Add(chunkData.position);
+		byte lightLevel = BlockTypes.lightLevel[blockType];
+		Vector3Int position = new Vector3Int(x, y, z);
+		if (lightLevel > 0)
+		{
+			chunkData.lightSources[position] = lightLevel;
+			Debug.Log($"LightSource added ({blockType})");
+		}
+		else
+		{
+			if (chunkData.lightSources.ContainsKey(position))
+			{
+				chunkData.lightSources.Remove(position);
+				Debug.Log($"LightSource removed");
+			}
+		}
+
 	}
 
 	public void UnloadChunk(Vector2Int position)

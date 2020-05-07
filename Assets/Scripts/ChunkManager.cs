@@ -53,8 +53,6 @@ public class ChunkManager : MonoBehaviour
 			c.transform.SetParent(chunkPrefab.transform.parent);
 		}
 
-		
-
 		shouldRenderThread = new Thread(ShouldRenderThread);
 		shouldRenderThread.IsBackground = true;
 		shouldRenderThread.Start();

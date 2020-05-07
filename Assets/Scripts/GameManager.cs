@@ -16,6 +16,7 @@ public class GameManager : MonoBehaviour
 	{
 		instance = this;
 		Initialize();
+		BlockTypes.Initialize();
 		InitializeWorld(testWorld);
 
 		CreateTextures();

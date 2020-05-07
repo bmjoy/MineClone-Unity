@@ -44,9 +44,13 @@ public class Chunk : MonoBehaviour
 		transform.position = new Vector3(renderPosition.x, 0, renderPosition.y);
 		mesh.Clear();
 
+		ChunkData chunkData = chunkDataManager.data[position];
+
+		byte[,] highestNonAirBlock = chunkData.highestNonAirBlock;
+
 		UnityEngine.Profiling.Profiler.BeginSample("GRABBING BLOCK DATA");
 		//don't cache these byte references, only use them in this function
-		byte[,,] blockData = chunkDataManager.data[position].GetBlocks();
+		byte[,,] blockData = chunkData.GetBlocks();
 		byte[,,] blockDataFront = chunkDataManager.data[position + new Vector2Int(0, 1)].GetBlocks();
 		byte[,,] blockDataBack = chunkDataManager.data[position + new Vector2Int(0, -1)].GetBlocks();
 		byte[,,] blockDataLeft = chunkDataManager.data[position + new Vector2Int(-1, 0)].GetBlocks();
@@ -68,14 +72,29 @@ public class Chunk : MonoBehaviour
 		{
 			for (int x = 0; x < 16; ++x)
 			{
-				if (blockData[x, 255, z] == BlockTypes.AIR)
+				int y = highestNonAirBlock[x, z];
+				if(x>0) y = Mathf.Max(highestNonAirBlock[x - 1, z], y);
+				if(x<15) y = Mathf.Max(highestNonAirBlock[x + 1, z], y);
+				if(z>0) y = Mathf.Max(highestNonAirBlock[x, z-1], y);
+				if (z<15) y = Mathf.Max(highestNonAirBlock[x, z+1], y);
+
+				y = Mathf.Min(y+1, 255);
+				simulateQueue.Enqueue(new Vector3Int(x, y, z));
+				while (y < 255)
 				{
-					lightData[x, 255, z] = 15;
-					simulateQueue.Enqueue(new Vector3Int(x, 255, z));
+					lightData[x, y, z] = 15;
+					y++;
 				}
-					
 			}
 		}
+
+		foreach (KeyValuePair<Vector3Int, byte> kv in chunkData.lightSources)
+		{
+			Vector3Int position = kv.Key;
+			lightData[position.x, position.y, position.z] = kv.Value;
+			simulateQueue.Enqueue(position);
+		}
+
 		int simulateCount = 0;
 		while (simulateQueue.Count > 0)
 		{

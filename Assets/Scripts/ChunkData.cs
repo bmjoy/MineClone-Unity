@@ -21,6 +21,10 @@ public class ChunkData
 
 	public List<StructureInfo> structures;
 
+	public Dictionary<Vector3Int, byte> lightSources;
+
+	public byte[,] highestNonAirBlock;
+
 	public ChunkSaveData saveData;
 
 	private ChunkData front, left, back, right; //neighbours (only exist while loading structures)
@@ -36,6 +40,7 @@ public class ChunkData
 		public Structure.Type type;
 	}
 
+
 	public ChunkData(Vector2Int position)
 	{
 		this.position = position;
@@ -44,6 +49,8 @@ public class ChunkData
 		chunkReady = false;
 		isDirty = false;
 		references = new HashSet<Vector2Int>();
+		lightSources = new Dictionary<Vector3Int, byte>();
+		highestNonAirBlock = new byte[16, 16];
 	}
 
 	public byte[,,] GetBlocks()
@@ -265,7 +272,7 @@ public class ChunkData
 	private void LoadDetails()
 	{
 		//load structures
-		
+
 		//remove all references to neighbors to avoid them staying in memory when unloading chunks
 		front = null;
 		left = null;
@@ -278,7 +285,7 @@ public class ChunkData
 			for (int x = 0; x < 16; ++x)
 			{
 				byte ray = 15;
-				for (int y = 255; y >-1; --y)
+				for (int y = 255; y > -1; --y)
 				{
 					byte block = blocks[x, y, z];
 					if (block == 0)
@@ -300,17 +307,60 @@ public class ChunkData
 		{
 			ChunkSaveData.C c = changes[i];
 			blocks[c.x, c.y, c.z] = c.b;
+			byte lightLevel = BlockTypes.lightLevel[c.b];
+			if (lightLevel > 0)
+			{
+				lightSources.Add(new Vector3Int(c.x, c.y, c.z), lightLevel);
+			}
 		}
 
+		//get highest non-air blocks to speed up light simulation
+		for (int z = 0; z < 16; ++z)
+		{
+			for (int x = 0; x < 16; ++x)
+			{
+				highestNonAirBlock[x, z] = 0;
+				for (int y = 255; y > -1; --y)
+				{
+					if (blocks[x, y, z] != BlockTypes.AIR)
+					{
+						highestNonAirBlock[x, z] = (byte)y;
+						break;
+					}
+				}
+			}
+		}
 		chunkReady = true;
-		Debug.Log($"Chunk {position} ready");
+		//Debug.Log($"Chunk {position} ready");
 	}
 
 	public void Modify(int x, int y, int z, byte blockType)
 	{
 		if (!chunkReady) throw new System.Exception("Chunk has not finished loading");
+		Debug.Log($"Current highest block at {x}x{z} is {highestNonAirBlock[x, z]}");
+
 		saveData.changes.Add(new ChunkSaveData.C((byte)x, (byte)y, (byte)z, blockType));
 		blocks[x, y, z] = blockType;
+		if (blockType == BlockTypes.AIR)
+		{
+			if (highestNonAirBlock[x, z] == y)
+			{
+				highestNonAirBlock[x, z] = 0;
+				for (int yy = y; yy > -1; yy--)
+				{
+					if (blocks[x, yy, z] != BlockTypes.AIR)
+					{
+						highestNonAirBlock[x, z] = (byte)yy;
+						break;
+					}
+				}
+			}
+		}
+		else
+		{
+			highestNonAirBlock[x, z] = (byte)Mathf.Max(highestNonAirBlock[x, z], y);
+		}
+		Debug.Log($"New highest block at {x}x{z} is {highestNonAirBlock[x, z]}");
 	}
 
 	public void Unload()

@@ -129,6 +129,17 @@ public class TextureMapper
 			new Color32(168, 255, 68, 255)
 			)
 		);
+
+		map.Add(BlockTypes.GLOWSTONE, new TextureMap(
+			new TextureMap.Face(new Vector2(192, 144)),
+			new TextureMap.Face(new Vector2(192, 144)),
+			new TextureMap.Face(new Vector2(192, 144)),
+			new TextureMap.Face(new Vector2(192, 144)),
+			new TextureMap.Face(new Vector2(192, 144)),
+			new TextureMap.Face(new Vector2(192, 144)),
+			new Color32(255, 255, 255, 255)
+			)
+		);
 	}
 
 	public class TextureMap
