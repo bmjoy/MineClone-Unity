@@ -66,12 +66,20 @@ public class ChunkDataManager
 		ChunkData back = LoadCompletely(position + nBack, position);
 		ChunkData left = LoadCompletely(position + nLeft, position);
 		ChunkData right = LoadCompletely(position + nRight, position);
+		ChunkData frontLeft = LoadCompletely(position + nFront + nLeft, position);
+		ChunkData frontRight = LoadCompletely(position + nFront + nRight, position);
+		ChunkData backLeft = LoadCompletely(position + nBack + nLeft, position);
+		ChunkData backRight = LoadCompletely(position + nBack + nRight, position);
 		bool ready = true;
 		ready &= chunkData.chunkReady;
 		ready &= front.chunkReady;
 		ready &= back.chunkReady;
 		ready &= left.chunkReady;
 		ready &= right.chunkReady;
+		ready &= frontLeft.chunkReady;
+		ready &= frontRight.chunkReady;
+		ready &= backLeft.chunkReady;
+		ready &= backRight.chunkReady;
 		return ready;
 	}
 
@@ -156,6 +164,10 @@ public class ChunkDataManager
 		RemoveReferenceInNeighbors(position + nBack, position);
 		RemoveReferenceInNeighbors(position + nLeft, position);
 		RemoveReferenceInNeighbors(position + nRight, position);
+		RemoveReferenceInNeighbors(position + nFront + nLeft, position);
+		RemoveReferenceInNeighbors(position + nFront + nRight, position);
+		RemoveReferenceInNeighbors(position + nBack + nLeft, position);
+		RemoveReferenceInNeighbors(position + nBack + nRight, position);
 	}
 
 	private void RemoveReferenceInNeighbors(Vector2Int position, Vector2Int reference)
