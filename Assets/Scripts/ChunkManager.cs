@@ -29,6 +29,11 @@ public class ChunkManager : MonoBehaviour
 	private volatile Queue<Vector2Int> unloadQueue;
 	private volatile List<Vector2Int> activeChunks;
 
+	private readonly Vector2Int nFront = new Vector2Int(0, 1);
+	private readonly Vector2Int nBack = new Vector2Int(0, -1);
+	private readonly Vector2Int nLeft = new Vector2Int(-1, 0);
+	private readonly Vector2Int nRight = new Vector2Int(1, 0);
+
 	public void Initialize()
 	{
 		renderDistance = GameManager.instance.gameSettings.RenderDistance;
@@ -250,17 +255,22 @@ public class ChunkManager : MonoBehaviour
 		}
 	}
 
-	public void Modify(Vector2Int chunk, int x, int y, int z, byte blockType)
+	public bool Modify(Vector2Int chunk, int x, int y, int z, byte blockType)
 	{
-		Debug.Log($"Chunk {chunk} Modifying {x} {y} {z} {blockType}");
+		if (modifiedRebuildQueue.Count > 0) return false;
 		if (!chunkMap.ContainsKey(chunk)) throw new System.Exception("Chunk is not available");
+		Debug.Log($"Chunk {chunk} Modifying {x} {y} {z} {blockType}");
 		chunkDataManager.Modify(chunk, x, y, z, blockType);
-		if (x == 15) modifiedRebuildQueue.Enqueue(chunk + new Vector2Int(1, 0));
-		if (x == 0) modifiedRebuildQueue.Enqueue(chunk + new Vector2Int(-1, 0));
-		if (z == 15) modifiedRebuildQueue.Enqueue(chunk + new Vector2Int(0, 1));
-		if (z == 0) modifiedRebuildQueue.Enqueue(chunk + new Vector2Int(0, -1));
 		modifiedRebuildQueue.Enqueue(chunk);
-		//chunkMap[chunk].Build(chunkDataManager);
+		modifiedRebuildQueue.Enqueue(chunk + nLeft);
+		modifiedRebuildQueue.Enqueue(chunk + nRight);
+		modifiedRebuildQueue.Enqueue(chunk + nFront);
+		modifiedRebuildQueue.Enqueue(chunk + nBack);
+		modifiedRebuildQueue.Enqueue(chunk + nFront+ nLeft);
+		modifiedRebuildQueue.Enqueue(chunk + nFront+ nRight);
+		modifiedRebuildQueue.Enqueue(chunk + nBack+ nLeft);
+		modifiedRebuildQueue.Enqueue(chunk + nBack+ nRight);
+		return true;
 	}
 
 	private void OnDestroy()

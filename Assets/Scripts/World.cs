@@ -8,7 +8,6 @@ public class World : MonoBehaviour
 	public WorldInfo info;
 	public Camera mainCamera;
 	public ChunkManager chunkManager;
-	private bool didModifyThisFrame = false;
 	private bool initialized = false;
 	public TMPro.TextMeshProUGUI debugText;
 	public void Initialize(WorldInfo info)
@@ -28,24 +27,22 @@ public class World : MonoBehaviour
 		//update chunks if no modifications have happened this frame
 		//only rebuild 1 chunk per frame to avoid framedrops
 		chunkManager.UpdateChunks(mainCamera);
-		didModifyThisFrame = false;
 	}
 
-	public void Modify(int x, int y, int z, byte blockType)
+	public bool Modify(int x, int y, int z, byte blockType)
 	{
-		if (!initialized) return;
+		if (!initialized) return false;
 		if (y < 0 || y > 255)
 		{
 			Debug.LogWarning("This is outside build limit");
-			return;
+			return false;
 		}
 		int chunkX = Mathf.FloorToInt(x / 16f);
 		int chunkY = Mathf.FloorToInt(z / 16f);
 		int relativeX = x - (chunkX*16);
 		int relativeZ = z - (chunkY*16);
-		Debug.Log($"World Modifying {x} {y} {z} {(int)blockType}. Chunk {chunkX} {chunkY}. Relative {relativeX} {y} {relativeZ}");
-		chunkManager.Modify(new Vector2Int(chunkX, chunkY), relativeX, y, relativeZ, blockType);
-		didModifyThisFrame = true;
+		
+		return chunkManager.Modify(new Vector2Int(chunkX, chunkY), relativeX, y, relativeZ, blockType);
 	}
 
 	private int GenerateSeed()

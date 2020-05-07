@@ -55,19 +55,19 @@ public class ChunkData
 
 	public byte[,,] GetBlocks()
 	{
-		if (!chunkReady) throw new System.Exception($"Chunk {position} has not finished loading");
+		//if (!chunkReady) throw new System.Exception($"Chunk {position} has not finished loading");
 		return blocks;
 	}
 
 	public byte[,,] GetLights()
 	{
-		if (!chunkReady) throw new System.Exception($"Chunk {position} has not finished loading");
+		//if (!chunkReady) throw new System.Exception($"Chunk {position} has not finished loading");
 		return light;
 	}
 
 	public byte[,,] NewLights()
 	{
-		if (!chunkReady) throw new System.Exception($"Chunk {position} has not finished loading");
+		//if (!chunkReady) throw new System.Exception($"Chunk {position} has not finished loading");
 		light = new byte[16, 256, 16];
 		return light;
 	}
