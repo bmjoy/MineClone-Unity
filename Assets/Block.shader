@@ -71,17 +71,23 @@ Shader "Unlit/Block"
 				half3 diffuseColor = DiffuseAndSpecularFromMetallic(_Color.rgb, _Metallic, specular, specularMonochrome);
 
 				fixed4 c = tex2D(_BlockTextures, vs.uv);
+				c.rgb = 1;
 				clip(c.a - 0.1);
 
 				fixed4 sky = GetSkyColor(vs.world_vertex - _WorldSpaceCameraPos);
 				float fade = saturate(pow(distance(_WorldSpaceCameraPos.xz, vs.world_vertex.xz) / (16.0 - 1.0) / 16.0, 12));
-
+				float4 vertexColor = vs.color;
+				c.rgb *= vertexColor.rgb;
+				float lightLevel = vertexColor.a * 16;
+				float light = lerp(0.1, 1, lightLevel);
+				
+				c *= light;
 				c.rgb += diffuseColor;
 
 				ps.albedo = 0;
 				ps.specular = half4(specular, 0);
 				ps.normal = half4(normalDirection * 0.5 + 0.5, 1.0);
-				ps.emission =lerp( c* vs.color,sky, fade);
+				ps.emission = lerp( c,sky, fade);
 				#ifndef UNITY_HDR_ON
 					ps.emission.rgb = exp2(-ps.emission.rgb);
 				#endif

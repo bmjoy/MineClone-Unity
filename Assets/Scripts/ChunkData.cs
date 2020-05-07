@@ -4,7 +4,7 @@ using System.Collections.Generic;
 public class ChunkData
 {
 	public Vector2Int position;
-	private byte[,,] blocks;
+	private byte[,,] blocks, light;
 	public bool terrainReady { get; private set; }
 	public bool startedLoadingDetails { get; private set; }
 	public bool chunkReady { get; private set; }
@@ -48,8 +48,14 @@ public class ChunkData
 
 	public byte[,,] GetBlocks()
 	{
-		if (!terrainReady) throw new System.Exception($"Chunk {position} has not finished loading");
+		if (!chunkReady) throw new System.Exception($"Chunk {position} has not finished loading");
 		return blocks;
+	}
+
+	public byte[,,] GetLights()
+	{
+		if (!chunkReady) throw new System.Exception($"Chunk {position} has not finished loading");
+		return light;
 	}
 
 	public void StartTerrainLoading()
@@ -78,6 +84,7 @@ public class ChunkData
 	public void LoadTerrain() //also loads structures INFO
 	{
 		blocks = new byte[16, 256, 16];
+		light = new byte[16, 256, 16];
 		Vector2Int worldPos = position * 16;
 
 		for (int z = 0; z < 16; ++z)
@@ -258,8 +265,28 @@ public class ChunkData
 		right = null;
 		back = null;
 
+		//add sky light
+		for (int z = 0; z < 16; ++z)
+		{
+			for (int x = 0; x < 16; ++x)
+			{
+				byte ray = 15;
+				for (int y = 255; y >-1; --y)
+				{
+					byte block = blocks[x, y, z];
+					if (block == 0)
+					{
+						light[x, y, z] = ray;
+					}
+					else
+					{
+						if (block < 128) break;
+						light[x, y, z] = ray;
+					}
+				}
+			}
+		}
 		//Debug.Log($"Chunk {position} structures ready");
-
 		//load changes
 		List<ChunkSaveData.C> changes = saveData.changes;
 		for (int i = 0; i < changes.Count; ++i)
