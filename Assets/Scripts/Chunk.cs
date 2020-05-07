@@ -68,7 +68,7 @@ public class Chunk : MonoBehaviour
 		{
 			for (int x = 0; x < 16; ++x)
 			{
-				if (blockData[x, 255, z] == 0)
+				if (blockData[x, 255, z] == BlockTypes.AIR)
 				{
 					lightData[x, 255, z] = 15;
 					simulateQueue.Enqueue(new Vector3Int(x, 255, z));
@@ -93,7 +93,7 @@ public class Chunk : MonoBehaviour
 
 			byte light = lightData[x, y, z];
 
-			if (right == 0)
+			if (right == BlockTypes.AIR)
 			{
 				byte lightR = (x == 15 ? (byte)15 : lightData[x + 1, y, z]);
 				if (lightR < light - 1)
@@ -102,7 +102,7 @@ public class Chunk : MonoBehaviour
 					simulateQueue.Enqueue(new Vector3Int(x + 1, y, z));
 				}
 			}
-			if (left == 0)
+			if (left == BlockTypes.AIR)
 			{
 				byte lightL = (x == 0 ? (byte)15 : lightData[x - 1, y, z]);
 				if (lightL < light - 1)
@@ -111,7 +111,7 @@ public class Chunk : MonoBehaviour
 					simulateQueue.Enqueue(new Vector3Int(x - 1, y, z));
 				}
 			}
-			if (down == 0)
+			if (down == BlockTypes.AIR)
 			{
 				if (light == 15)
 				{
@@ -128,7 +128,7 @@ public class Chunk : MonoBehaviour
 					}
 				}
 			}
-			if (up == 0)
+			if (up == BlockTypes.AIR)
 			{
 				byte lightU = (y == 255 ? (byte)15 : lightData[x, y + 1, z]);
 				if (lightU < light - 1)
@@ -137,7 +137,7 @@ public class Chunk : MonoBehaviour
 					simulateQueue.Enqueue(new Vector3Int(x, y + 1, z));
 				}
 			}
-			if (front == 0)
+			if (front == BlockTypes.AIR)
 			{
 				byte lightF = (z == 15 ? (byte)15 : lightData[x, y, z + 1]);
 				if (lightF < light - 1)
@@ -146,7 +146,7 @@ public class Chunk : MonoBehaviour
 					simulateQueue.Enqueue(new Vector3Int(x, y, z + 1));
 				}
 			}
-			if (back == 0)
+			if (back == BlockTypes.AIR)
 			{
 				byte lightB = (z == 0 ? (byte)15 : lightData[x, y, z - 1]);
 				if (lightB < light - 1)
@@ -170,26 +170,35 @@ public class Chunk : MonoBehaviour
 				for (int x = 0; x < 16; ++x)
 				{
 					byte c = blockData[x, y, z];
-					if (c != 0)
+					if (c != BlockTypes.AIR)
 					{
 						byte right = (x == 15 ? blockDataRight[0, y, z] : blockData[x+1, y, z]);
 						byte left =( x == 0 ? blockDataLeft[15, y, z] : blockData[x-1, y, z]);
 						byte front =( z == 15 ? blockDataFront[x, y, 0] : blockData[x, y, z+1]);
 						byte back = (z == 0 ? blockDataBack[x, y, 15] : blockData[x, y, z-1]);
-						byte up = (y == 255 ? (byte)0 : blockData[x, y + 1, z]);
-						byte down = (y == 0 ? (byte)0 : blockData[x, y - 1, z]);
+						byte up = (y == 255 ? BlockTypes.AIR : blockData[x, y + 1, z]);
+						byte down = (y == 0 ? BlockTypes.AIR : blockData[x, y - 1, z]);
 
 						byte lightR = (x == 15 ? lightDataRight[0, y, z] : lightData[x + 1, y, z]);
 						byte lightL = (x == 0 ? lightDataLeft[15, y, z] : lightData[x - 1, y, z]);
 						byte lightF = (z == 15 ? lightDataFront[x, y, 0] : lightData[x, y, z + 1]);
 						byte lightB = (z == 0 ? lightDataBack[x, y, 15] : lightData[x, y, z - 1]);
-						byte lightU = (y == 255 ? (byte)0 : lightData[x, y + 1, z]);
-						byte lightD = (y == 0 ? (byte)0 : lightData[x, y - 1, z]);
+						byte lightU = (y == 255 ? (byte)15 : lightData[x, y + 1, z]);
+						byte lightD = (y == 0 ? (byte)15 : lightData[x, y - 1, z]);
 
-						TextureMapper.TextureMap textureMap = chunkDataManager.textureMapper.map[c];
+						TextureMapper.TextureMap textureMap;
+						try
+						{
+							textureMap = chunkDataManager.textureMapper.map[c];
+						}
+						catch (System.Exception e)
+						{
+							Debug.LogWarning($"{c} at {x}-{y}-{z} in {gameObject.name}");
+							throw e;
+						}
 
 
-						if (right == 0 || right>127)
+						if (right>127)
 						{
 							AddFace(
 								new Vector3(x + 1, y, z),
@@ -201,7 +210,7 @@ public class Chunk : MonoBehaviour
 							AddTextureFace(textureMap.right);
 							AddColors(textureMap,lightR);
 						}
-						if (left == 0 || left > 127)
+						if (left > 127)
 						{
 							AddFace(
 								new Vector3(x, y, z + 1),
@@ -215,7 +224,7 @@ public class Chunk : MonoBehaviour
 
 						}
 
-						if (up == 0 || up > 127)
+						if (up > 127)
 						{
 							AddFace(
 								new Vector3(x, y + 1, z),
@@ -228,7 +237,7 @@ public class Chunk : MonoBehaviour
 							AddColors(textureMap,lightU);
 
 						}
-						if (down == 0 || down > 127)
+						if (down > 127)
 						{
 							AddFace(
 								new Vector3(x, y, z),
@@ -242,7 +251,7 @@ public class Chunk : MonoBehaviour
 
 						}
 
-						if (front == 0 || front > 127)
+						if (front > 127)
 						{
 							AddFace(
 								new Vector3(x + 1, y, z + 1),
@@ -255,7 +264,7 @@ public class Chunk : MonoBehaviour
 							AddColors(textureMap,lightF);
 
 						}
-						if (back == 0 || back > 127)
+						if (back > 127)
 						{
 							AddFace(
 								new Vector3(x, y, z),
