@@ -66,7 +66,7 @@ public class FreeCam : MonoBehaviour
 			}
 			if (place)
 			{
-				world.Modify(placeBlock.x, placeBlock.y, placeBlock.z, BlockTypes.LEAVES_OAK);
+				world.Modify(placeBlock.x, placeBlock.y, placeBlock.z, BlockTypes.PLANKS_OAK);
 			}
 
 			highlightPrefab.transform.position = removeBlock + new Vector3(.5f, .5f, .5f);

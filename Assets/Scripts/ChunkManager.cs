@@ -155,8 +155,9 @@ public class ChunkManager : MonoBehaviour
 		shouldRenderWaitForUpdate = false;
 		UnityEngine.Profiling.Profiler.EndSample();
 		int activeChunksCount = activeChunks.Count;
+		int rebuildQueueCount = modifiedRebuildQueue.Count;
 		int chunksInMemoryCount = chunkDataManager.GetChunksInMemoryCount();
-		World.activeWorld.debugText.text += $" / Chunks (Q {loadQueueCount}/A {activeChunksCount}/M {chunksInMemoryCount})";
+		World.activeWorld.debugText.text += $" / Chunks (Q {loadQueueCount}/R {rebuildQueueCount}/A {activeChunksCount}/M {chunksInMemoryCount})";
 		UnityEngine.Profiling.Profiler.EndSample();
 	}
 

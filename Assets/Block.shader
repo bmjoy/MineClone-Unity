@@ -71,7 +71,7 @@ Shader "Unlit/Block"
 				half3 diffuseColor = DiffuseAndSpecularFromMetallic(_Color.rgb, _Metallic, specular, specularMonochrome);
 
 				fixed4 c = tex2D(_BlockTextures, vs.uv);
-				c.rgb = 1;
+				//c.rgb = 1;
 				clip(c.a - 0.1);
 
 				fixed4 sky = GetSkyColor(vs.world_vertex - _WorldSpaceCameraPos);

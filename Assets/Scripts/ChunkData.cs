@@ -58,6 +58,13 @@ public class ChunkData
 		return light;
 	}
 
+	public byte[,,] NewLights()
+	{
+		if (!chunkReady) throw new System.Exception($"Chunk {position} has not finished loading");
+		light = new byte[16, 256, 16];
+		return light;
+	}
+
 	public void StartTerrainLoading()
 	{
 		//Debug.Log($"Chunk {position} start terrain loading");
