@@ -140,6 +140,50 @@ public class TextureMapper
 			new Color32(255, 255, 255, 255)
 			)
 		);
+
+		map.Add(BlockTypes.ANDESITE, new TextureMap(
+			new TextureMap.Face(new Vector2(320, 128)),
+			new TextureMap.Face(new Vector2(320, 128)),
+			new TextureMap.Face(new Vector2(320, 128)),
+			new TextureMap.Face(new Vector2(320, 128)),
+			new TextureMap.Face(new Vector2(320, 128)),
+			new TextureMap.Face(new Vector2(320, 128)),
+			new Color32(255, 255, 255, 255)
+			)
+		);
+
+		map.Add(BlockTypes.DIORITE, new TextureMap(
+			new TextureMap.Face(new Vector2(176, 176)),
+			new TextureMap.Face(new Vector2(176, 176)),
+			new TextureMap.Face(new Vector2(176, 176)),
+			new TextureMap.Face(new Vector2(176, 176)),
+			new TextureMap.Face(new Vector2(176, 176)),
+			new TextureMap.Face(new Vector2(176, 176)),
+			new Color32(255, 255, 255, 255)
+			)
+		);
+
+		map.Add(BlockTypes.GRANITE, new TextureMap(
+			new TextureMap.Face(new Vector2(192, 96)),
+			new TextureMap.Face(new Vector2(192, 96)),
+			new TextureMap.Face(new Vector2(192, 96)),
+			new TextureMap.Face(new Vector2(192, 96)),
+			new TextureMap.Face(new Vector2(192, 96)),
+			new TextureMap.Face(new Vector2(192, 96)),
+			new Color32(255, 255, 255, 255)
+			)
+		);
+
+		map.Add(BlockTypes.COBBLESTONE, new TextureMap(
+			new TextureMap.Face(new Vector2(464, 368)),
+			new TextureMap.Face(new Vector2(464, 368)),
+			new TextureMap.Face(new Vector2(464, 368)),
+			new TextureMap.Face(new Vector2(464, 368)),
+			new TextureMap.Face(new Vector2(464, 368)),
+			new TextureMap.Face(new Vector2(464, 368)),
+			new Color32(255, 255, 255, 255)
+			)
+		);
 	}
 
 	public class TextureMap

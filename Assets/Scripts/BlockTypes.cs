@@ -6,6 +6,7 @@ public class BlockTypes
 	public const byte GRASS =1;
 	public const byte DIRT =2;
 	public const byte STONE = 3;
+	public const byte COBBLESTONE = 4;
 	public const byte COAL =5;
 	public const byte IRON = 6;
 	public const byte GOLD = 7;
@@ -13,6 +14,9 @@ public class BlockTypes
 	public const byte LOG_OAK = 9;
 	public const byte PLANKS_OAK = 10;
 	public const byte GLOWSTONE = 11;
+	public const byte DIORITE = 12;
+	public const byte GRANITE = 13;
+	public const byte ANDESITE = 14;
 
 	//TRANSPARENT
 	public const byte LEAVES_OAK = 128;
@@ -37,6 +41,10 @@ public class BlockTypes
 		lightLevel.Add(GLOWSTONE, 14);
 		lightLevel.Add(LEAVES_OAK, 0);
 		lightLevel.Add(AIR, 0);
+		lightLevel.Add(ANDESITE, 0);
+		lightLevel.Add(DIORITE, 0);
+		lightLevel.Add(GRANITE, 0);
+		lightLevel.Add(COBBLESTONE, 0);
 
 		density = new Dictionary<byte, byte>();
 		density.Add(BEDROCK, 255);
@@ -52,6 +60,10 @@ public class BlockTypes
 		density.Add(GLOWSTONE, 255);
 		density.Add(LEAVES_OAK, 63);
 		density.Add(AIR, 0);
+		density.Add(ANDESITE, 255);
+		density.Add(DIORITE, 255);
+		density.Add(GRANITE, 255);
+		density.Add(COBBLESTONE, 255);
 	}
 
 }
