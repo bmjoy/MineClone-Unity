@@ -84,6 +84,8 @@ public class Chunk : MonoBehaviour
 
 
 		Queue<Vector3Int> simulateQueue = new Queue<Vector3Int>();
+		//sunray tracing needs to start above the highest non-air block to increase performance
+		//all blocks above that block need to be set to 15
 		for (int z =0; z < 48; ++z)
 		{
 			for (int x = 0; x < 48; ++x)
@@ -93,7 +95,7 @@ public class Chunk : MonoBehaviour
 					//Debug.Log($"these should at least 0 or 47  ->  {x} {z}"); 
 					for (int yy = 0; yy < 256; ++yy) //dont do outer edges
 					{
-						lightMap[x, yy, z] = 15; //set all edges to 15 to stop tracing
+						lightMap[x, yy, z] = 15; //set all edges to 15 to stop tracing at edges
 					}
 					continue;
 				}
@@ -128,20 +130,12 @@ public class Chunk : MonoBehaviour
 			int y = position.y;
 			int z = position.z;
 
-			//byte bR = (x == 15 ? right.GetBlocks()[0, y, z] : chunkData.GetBlocks()[x + 1, y, z]);
-			//byte bL = (x == 0 ? left.GetBlocks()[15, y, z] : chunkData.GetBlocks()[x - 1, y, z]);
-			//byte bF = (z == 15 ? front.GetBlocks()[x, y, 0] : chunkData.GetBlocks()[x, y, z + 1]);
-			//byte bB = (z == 0 ? back.GetBlocks()[x, y, 15] : chunkData.GetBlocks()[x, y, z - 1]);
-			//byte bU = (y == 255 ? (byte)0 : chunkData.GetBlocks()[x, y + 1, z]);
-			//byte bD = (y == 0 ? (byte)0 : chunkData.GetBlocks()[x, y - 1, z]);
-
 			byte bR = GetBlockFromMap(chunkMap, x + 1, y, z);
 			byte bL = GetBlockFromMap(chunkMap, x - 1, y, z);
 			byte bF = GetBlockFromMap(chunkMap, x , y, z+1);
 			byte bB = GetBlockFromMap(chunkMap, x , y, z-1);
 			byte bU = (y == 255 ? (byte)0 : GetBlockFromMap(chunkMap, x , y+1, z));
 			byte bD = (y == 0 ? (byte)0 : GetBlockFromMap(chunkMap, x , y-1, z));
-
 
 
 			byte light = lightMap[x, y, z];
@@ -226,6 +220,10 @@ public class Chunk : MonoBehaviour
 					byte c = chunkData.GetBlocks()[x, y, z];
 					if (c != BlockTypes.AIR)
 					{
+						int lx = x + 16;
+						int ly = y;
+						int lz = z + 16;
+
 						byte bR = (x == 15 ? right.GetBlocks()[0, y, z] : chunkData.GetBlocks()[x+1, y, z]);
 						byte bL =( x == 0 ? left.GetBlocks()[15, y, z] : chunkData.GetBlocks()[x-1, y, z]);
 						byte bF =( z == 15 ? front.GetBlocks()[x, y, 0] : chunkData.GetBlocks()[x, y, z+1]);
@@ -233,12 +231,14 @@ public class Chunk : MonoBehaviour
 						byte bU = (y == 255 ? BlockTypes.AIR : chunkData.GetBlocks()[x, y + 1, z]);
 						byte bD = (y == 0 ? BlockTypes.AIR : chunkData.GetBlocks()[x, y - 1, z]);
 
-						byte lightR = lightMap[x + 16 + 1, y, z + 16];
-						byte lightL = lightMap[x + 16 - 1, y, z + 16];
-						byte lightF = lightMap[x + 16, y, z + 16 + 1];
-						byte lightB = lightMap[x + 16, y, z + 16 - 1];
-						byte lightU = (y == 255 ? (byte)15 : lightMap[x + 16, y + 1, z + 16]);
-						byte lightD = (y == 0 ? (byte)15 : lightMap[x + 16, y - 1, z + 16]);
+						byte lightR = lightMap[lx + 1, ly, lz];
+						byte lightL = lightMap[lx - 1, ly, lz];
+						byte lightF = lightMap[lx, ly, lz + 1];
+						byte lightB = lightMap[lx, ly, lz - 1];
+						byte lightU = (y == 255 ? (byte)15 : lightMap[lx, ly + 1, lz]);
+						byte lightD = (y == 0 ? (byte)15 : lightMap[lx, ly - 1, lz]);
+
+
 
 						TextureMapper.TextureMap textureMap;
 						try
@@ -262,7 +262,13 @@ public class Chunk : MonoBehaviour
 								Vector3.right
 							);
 							AddTextureFace(textureMap.right);
-							AddColors(textureMap,lightR);
+							int b = (y == 0 ? 0 : 1);
+							int t = (y == 255 ? 0 : 1);
+							byte bl = (byte)((lightMap[lx+1, ly, lz] + lightMap[lx + 1, ly, lz - 1] + lightMap[lx + 1, ly - b, lz] + lightMap[lx + 1, ly - b, lz - 1]) / 4);
+							byte tl = (byte)((lightMap[lx + 1, ly, lz] + lightMap[lx + 1, ly, lz - 1] + lightMap[lx + 1, ly + t, lz] + lightMap[lx + 1, ly + t, lz - 1]) / 4);
+							byte tr = (byte)((lightMap[lx + 1, ly, lz] + lightMap[lx + 1, ly, lz + 1] + lightMap[lx + 1, ly + t, lz ] + lightMap[lx + 1, ly + t, lz + 1]) / 4);
+							byte br = (byte)((lightMap[lx + 1, ly, lz] + lightMap[lx + 1, ly, lz + 1] + lightMap[lx + 1, ly - b, lz ] + lightMap[lx + 1, ly - b, lz + 1]) / 4);
+							AddColors(textureMap,bl, tl, tr, br);
 						}
 						if (bL > 127)
 						{
@@ -274,7 +280,13 @@ public class Chunk : MonoBehaviour
 								-Vector3.right
 							);
 							AddTextureFace(textureMap.left);
-							AddColors(textureMap,lightL);
+							int b = (y == 0 ? 0 : 1);
+							int t = (y == 255 ? 0 : 1);
+							byte br = (byte)((lightMap[lx - 1, ly, lz] + lightMap[lx - 1, ly, lz - 1] + lightMap[lx - 1, ly - b, lz] + lightMap[lx - 1, ly - b, lz - 1]) / 4);
+							byte tr = (byte)((lightMap[lx - 1, ly, lz] + lightMap[lx - 1, ly, lz - 1] + lightMap[lx - 1, ly + t, lz] + lightMap[lx - 1, ly + t, lz - 1]) / 4);
+							byte tl = (byte)((lightMap[lx - 1, ly, lz] + lightMap[lx - 1, ly, lz + 1] + lightMap[lx - 1, ly + t, lz] + lightMap[lx - 1, ly + t, lz + 1]) / 4);
+							byte bl = (byte)((lightMap[lx - 1, ly, lz] + lightMap[lx - 1, ly, lz + 1] + lightMap[lx - 1, ly - b, lz] + lightMap[lx - 1, ly - b, lz + 1]) / 4);
+							AddColors(textureMap, bl, tl, tr, br);
 
 						}
 
@@ -288,20 +300,33 @@ public class Chunk : MonoBehaviour
 								Vector3.up
 							);
 							AddTextureFace(textureMap.top);
-							AddColors(textureMap,lightU);
+							int b = (y == 0 ? 0 : 1);
+							int t = (y == 255 ? 0 : 1);
+							byte bl = (byte)((lightMap[lx, ly+ t, lz ] + lightMap[lx - 1, ly + t, lz] + lightMap[lx, ly + t, lz - 1] + lightMap[lx - 1, ly + t, lz - 1]) / 4);
+							byte tl = (byte)((lightMap[lx, ly + t, lz ] + lightMap[lx - 1, ly + t, lz ] + lightMap[lx, ly + t, lz + 1] + lightMap[lx - 1, ly + t, lz + 1]) / 4);
+							byte tr = (byte)((lightMap[lx, ly + t, lz ] + lightMap[lx + 1, ly + t, lz ] + lightMap[lx, ly + t, lz + 1] + lightMap[lx + 1, ly + t, lz + 1]) / 4);
+							byte br = (byte)((lightMap[lx, ly + t, lz ] + lightMap[lx + 1, ly + t, lz ] + lightMap[lx, ly + t, lz - 1] + lightMap[lx + 1, ly + t, lz - 1]) / 4);
+							AddColors(textureMap, bl, tl, tr, br);
 
 						}
 						if (bD > 127)
 						{
 							AddFace(
+								new Vector3(x, y, z + 1),
 								new Vector3(x, y, z),
 								new Vector3(x+1, y, z),
 								new Vector3(x+1, y, z+1),
-								new Vector3(x, y, z+1),
+								
 								-Vector3.up
 							);
 							AddTextureFace(textureMap.bottom);
-							AddColors(textureMap,lightD);
+							int b = (y == 0 ? 0 : 1);
+							int t = (y == 255 ? 0 : 1);
+							byte tl = (byte)((lightMap[lx, ly -b, lz] + lightMap[lx - 1, ly - b, lz] + lightMap[lx, ly - b, lz - 1] + lightMap[lx - 1, ly - b, lz - 1]) / 4);
+							byte bl = (byte)((lightMap[lx, ly - b, lz] + lightMap[lx - 1, ly - b, lz] + lightMap[lx, ly - b, lz + 1] + lightMap[lx - 1, ly - b, lz + 1]) / 4);
+							byte br = (byte)((lightMap[lx, ly - b, lz] + lightMap[lx + 1, ly - b, lz] + lightMap[lx, ly - b, lz + 1] + lightMap[lx + 1, ly - b, lz + 1]) / 4);
+							byte tr = (byte)((lightMap[lx, ly - b, lz] + lightMap[lx + 1, ly - b, lz] + lightMap[lx, ly - b, lz - 1] + lightMap[lx + 1, ly - b, lz - 1]) / 4);
+							AddColors(textureMap, bl, tl, tr, br);
 
 						}
 
@@ -315,7 +340,13 @@ public class Chunk : MonoBehaviour
 								Vector3.forward
 							);
 							AddTextureFace(textureMap.front);
-							AddColors(textureMap,lightF);
+							int b = (y == 0 ? 0 : 1);
+							int t = (y == 255 ? 0 : 1);
+							byte br = (byte)((lightMap[lx, ly, lz + 1] + lightMap[lx - 1, ly, lz + 1] + lightMap[lx, ly - b, lz + 1] + lightMap[lx - 1, ly - b, lz + 1]) / 4);
+							byte tr = (byte)((lightMap[lx, ly, lz + 1] + lightMap[lx - 1, ly, lz + 1] + lightMap[lx, ly + t, lz + 1] + lightMap[lx - 1, ly + t, lz + 1]) / 4);
+							byte tl = (byte)((lightMap[lx, ly, lz + 1] + lightMap[lx + 1, ly, lz + 1] + lightMap[lx, ly + t, lz + 1] + lightMap[lx + 1, ly + t, lz + 1]) / 4);
+							byte bl = (byte)((lightMap[lx, ly, lz + 1] + lightMap[lx + 1, ly, lz + 1] + lightMap[lx, ly - b, lz + 1] + lightMap[lx + 1, ly - b, lz + 1]) / 4);
+							AddColors(textureMap,bl, tl, tr, br);
 
 						}
 						if (bB > 127)
@@ -328,7 +359,13 @@ public class Chunk : MonoBehaviour
 								-Vector3.forward
 							);
 							AddTextureFace(textureMap.back);
-							AddColors(textureMap,lightB);
+							int b = (y == 0 ? 0 : 1);
+							int t = (y == 255 ? 0 : 1);
+							byte bl = (byte)((lightMap[lx, ly, lz-1] + lightMap[lx-1, ly, lz-1] + lightMap[lx, ly-b, lz-1] + lightMap[lx-1, ly-b, lz-1])/4);
+							byte tl = (byte)((lightMap[lx, ly, lz - 1] + lightMap[lx-1, ly, lz - 1] + lightMap[lx, ly+t, lz - 1] + lightMap[lx-1, ly+t, lz - 1])/4);
+							byte tr = (byte)((lightMap[lx, ly, lz - 1] + lightMap[lx+1, ly, lz - 1] + lightMap[lx, ly+t, lz - 1] + lightMap[lx+1, ly+t, lz - 1])/4);
+							byte br = (byte)((lightMap[lx, ly, lz - 1] + lightMap[lx+1, ly, lz - 1] + lightMap[lx, ly-b, lz - 1] + lightMap[lx+1, ly-b, lz - 1])/4);
+							AddColors(textureMap,bl, tl, tr, br);
 
 						}
 					}
@@ -406,14 +443,14 @@ public class Chunk : MonoBehaviour
 		uvs.Add(face.br);
 	}
 
-	private void AddColors(TextureMapper.TextureMap textureMap, byte lightLevel)
+	private void AddColors(TextureMapper.TextureMap textureMap, byte lBL,byte lTL, byte lTR, byte lBR)
 	{
 		Color32 c = textureMap.defaultColor;
-		c.a = lightLevel;
-		colors.Add(c);
-		colors.Add(c);
-		colors.Add(c);
-		colors.Add(c);
+		//c.a = lightLevel;
+		colors.Add(new Color32(c.r,c.g,c.b,lBL));
+		colors.Add(new Color32(c.r, c.g, c.b, lTL));
+		colors.Add(new Color32(c.r, c.g, c.b, lTR));
+		colors.Add(new Color32(c.r, c.g, c.b, lBR));
 	}
 
 	public void Unload()
