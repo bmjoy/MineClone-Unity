@@ -115,11 +115,20 @@ public class Chunk : MonoBehaviour
 			}
 		}
 
-		foreach (KeyValuePair<Vector3Int, byte> kv in chunkData.lightSources)
+		for (int y = 0; y < 3; ++y)
 		{
-			Vector3Int position = kv.Key;
-			lightMap[position.x+16, position.y, position.z+16] = kv.Value;
-			simulateQueue.Enqueue(position+new Vector3Int(16,0,16));
+			for (int x = 0; x < 3; ++x)
+			{
+				foreach (KeyValuePair<Vector3Int, byte> kv in chunkMap[x,y].lightSources)
+				{
+					Vector3Int position = kv.Key;
+					int lX = (16 * x) + position.x;
+					int lY = position.y;
+					int lZ = (16 * y) + position.z;
+					lightMap[lX, lY, lZ] = kv.Value;
+					simulateQueue.Enqueue(new Vector3Int(lX, lY, lZ));
+				}
+			}
 		}
 
 		int simulateCount = 0;
@@ -130,13 +139,12 @@ public class Chunk : MonoBehaviour
 			int y = position.y;
 			int z = position.z;
 
-			byte bR = GetBlockFromMap(chunkMap, x + 1, y, z);
-			byte bL = GetBlockFromMap(chunkMap, x - 1, y, z);
-			byte bF = GetBlockFromMap(chunkMap, x , y, z+1);
-			byte bB = GetBlockFromMap(chunkMap, x , y, z-1);
-			byte bU = (y == 255 ? (byte)0 : GetBlockFromMap(chunkMap, x , y+1, z));
-			byte bD = (y == 0 ? (byte)0 : GetBlockFromMap(chunkMap, x , y-1, z));
-
+			byte bR = (x == 47 ? BlockTypes.BEDROCK : GetBlockFromMap(chunkMap, x + 1, y, z));
+			byte bL = (x == 0 ? BlockTypes.BEDROCK : GetBlockFromMap(chunkMap, x - 1, y, z));
+			byte bF = (z == 47 ? BlockTypes.BEDROCK : GetBlockFromMap(chunkMap, x, y, z + 1));
+			byte bB = (z == 0 ? BlockTypes.BEDROCK : GetBlockFromMap(chunkMap, x, y, z - 1));
+			byte bU = (y == 255 ? BlockTypes.BEDROCK : GetBlockFromMap(chunkMap, x, y + 1, z));
+			byte bD = (y == 0 ? BlockTypes.BEDROCK : GetBlockFromMap(chunkMap, x, y - 1, z));
 
 			byte light = lightMap[x, y, z];
 
