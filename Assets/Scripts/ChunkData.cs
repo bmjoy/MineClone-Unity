@@ -31,13 +31,15 @@ public class ChunkData
 
 	public struct StructureInfo
 	{
-		public StructureInfo(Vector3Int position, Structure.Type type)
+		public StructureInfo(Vector3Int position, Structure.Type type, int seed)
 		{
 			this.position = position;
 			this.type = type;
+			this.seed = seed;
 		}
 		public Vector3Int position;
 		public Structure.Type type;
+		public int seed;
 	}
 
 
@@ -210,9 +212,9 @@ public class ChunkData
 		bool[,] spotsTaken = new bool[16, 16];
 
 		//trees
-		for (int y = 1; y < 15; ++y)
+		for (int y = 2; y < 14; ++y)
 		{
-			for (int x = 1; x < 15; ++x)
+			for (int x = 2; x < 14; ++x)
 			{
 				if (rnd.Next() < STRUCTURE_CHANCE_TREE)
 				{
@@ -224,15 +226,14 @@ public class ChunkData
 						{
 							if (blocks[x, height, y] == BlockTypes.GRASS)
 							{
-								Structure.Type structureType = Structure.Type.OAK_TREE_SMALL_1;
-								structures.Add(new StructureInfo(new Vector3Int(x, height + 1, y), structureType));
-								//place tree function
-								//temp
-								blocks[x, height + 1, y] = BlockTypes.LOG_OAK;
-								blocks[x, height +2, y] = BlockTypes.LOG_OAK;
-								blocks[x, height + 3, y] = BlockTypes.LOG_OAK;
-								blocks[x, height + 4, y] = BlockTypes.LOG_OAK;
-								blocks[x, height + 5 ,y] = BlockTypes.LOG_OAK;
+								structures.Add(new StructureInfo(new Vector3Int(x, height + 1, y), Structure.Type.OAK_TREE, rnd.Next()));
+								////place tree function
+								////temp
+								//blocks[x, height + 1, y] = BlockTypes.LOG_OAK;
+								//blocks[x, height +2, y] = BlockTypes.LOG_OAK;
+								//blocks[x, height + 3, y] = BlockTypes.LOG_OAK;
+								//blocks[x, height + 4, y] = BlockTypes.LOG_OAK;
+								//blocks[x, height + 5 ,y] = BlockTypes.LOG_OAK;
 								break;
 							}
 							height--;
@@ -264,14 +265,24 @@ public class ChunkData
 		return !spotTaken;
 	}
 
-	private void PlaceStructure(Vector2Int position)
-	{
-
-	}
-
 	private void LoadDetails()
 	{
 		//load structures
+
+		for (int i = 0; i < structures.Count; ++i)
+		{
+			StructureInfo structure = structures[i];
+			Vector3Int p = structure.position;
+			int x = p.x;
+			int y = p.y;
+			int z = p.z;
+			List<Structure.Change> changeList = Structure.Generate(structure.type, structure.seed);
+			for (int j = 0; j < changeList.Count; ++j)
+			{
+				Structure.Change c = changeList[j];
+				blocks[x + c.x, y + c.y, z + c.z] = c.b;
+			}
+		}
 
 		//remove all references to neighbors to avoid them staying in memory when unloading chunks
 		front = null;
@@ -280,26 +291,26 @@ public class ChunkData
 		back = null;
 
 		//add sky light
-		for (int z = 0; z < 16; ++z)
-		{
-			for (int x = 0; x < 16; ++x)
-			{
-				byte ray = 15;
-				for (int y = 255; y > -1; --y)
-				{
-					byte block = blocks[x, y, z];
-					if (block == 0)
-					{
-						light[x, y, z] = ray;
-					}
-					else
-					{
-						if (block < 128) break;
-						light[x, y, z] = ray;
-					}
-				}
-			}
-		}
+		//for (int z = 0; z < 16; ++z)
+		//{
+		//	for (int x = 0; x < 16; ++x)
+		//	{
+		//		byte ray = 15;
+		//		for (int y = 255; y > -1; --y)
+		//		{
+		//			byte block = blocks[x, y, z];
+		//			if (block == 0)
+		//			{
+		//				light[x, y, z] = ray;
+		//			}
+		//			else
+		//			{
+		//				if (block < 128) break;
+		//				light[x, y, z] = ray;
+		//			}
+		//		}
+		//	}
+		//}
 		//Debug.Log($"Chunk {position} structures ready");
 		//load changes
 		List<ChunkSaveData.C> changes = saveData.changes;
