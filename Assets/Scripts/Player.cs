@@ -8,7 +8,7 @@ public class Player : MonoBehaviour
 	public World world;
 	public Camera mainCamera;
 	Vector3 euler = new Vector3();
-	public float walkSpeed, walkForce, fallSpeed, fallForce, jumpVelocity;
+	public float walkSpeed, walkForce, fallSpeed, fallForce, jumpVelocity, runSpeed, runForce;
 
 	[SerializeField] private Rigidbody myRigidbody;
 	[SerializeField] private GameObject highlightPrefab;
@@ -19,6 +19,14 @@ public class Player : MonoBehaviour
 
 	void Update()
     {
+		if (GameManager.instance.isInStartup)
+		{
+			myRigidbody.isKinematic = true;
+			return;
+		}
+		myRigidbody.isKinematic = false;
+
+
 		if (Input.GetKeyDown(KeyCode.F1))
 		{
 			Cursor.lockState = Cursor.lockState == CursorLockMode.Locked ? CursorLockMode.None : CursorLockMode.Locked;
@@ -40,6 +48,9 @@ public class Player : MonoBehaviour
 		movement.y += Input.GetKey(KeyCode.W) ? 1 : 0;
 		movement.y -= Input.GetKey(KeyCode.S) ? 1 : 0;
 
+		bool running = Input.GetKey(KeyCode.LeftShift);
+		float moveForce = running ? runForce : walkForce;
+		float moveSpeed = running ? runSpeed : walkSpeed;
 		
 
 		Vector3 forward = mainCamera.transform.forward;
@@ -55,8 +66,8 @@ public class Player : MonoBehaviour
 		stillVelocity.z = 0;
 		myRigidbody.velocity = Vector3.Lerp(myRigidbody.velocity, stillVelocity, Time.deltaTime * 8f);
 
-		myRigidbody.AddForce(forward * movement.y * (walkForce * Time.deltaTime));
-		myRigidbody.AddForce(right * movement.x * (walkForce * Time.deltaTime));
+		myRigidbody.AddForce(forward * movement.y * (moveForce * Time.deltaTime));
+		myRigidbody.AddForce(right * movement.x * (moveForce * Time.deltaTime));
 		myRigidbody.AddForce(Vector3.down * fallForce * Time.deltaTime);
 
 		Vector3 velocityWalk = myRigidbody.velocity;
@@ -64,9 +75,9 @@ public class Player : MonoBehaviour
 		Vector3 velocityFall = myRigidbody.velocity;
 		velocityFall.x = 0;
 		velocityFall.z = 0;
-		if (velocityWalk.magnitude > walkSpeed)
+		if (velocityWalk.magnitude > moveSpeed)
 		{
-			velocityWalk = velocityWalk.normalized * walkSpeed;
+			velocityWalk = velocityWalk.normalized * moveSpeed;
 		}
 		if (velocityFall.magnitude > fallSpeed)
 		{

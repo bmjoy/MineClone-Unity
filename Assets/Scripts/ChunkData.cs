@@ -14,6 +14,8 @@ public class ChunkData
 	//devide by chance ( 1 in X )
 	const int STRUCTURE_CHANCE_TREE = (int.MaxValue / 100);
 	const int STRUCTURE_CHANCE_WELL = (int.MaxValue / 512);
+	const int STRUCTURE_CHANCE_CAVE_ENTRANCE = (int.MaxValue / 50);
+
 
 	private Thread loadTerrainThread;
 	private Thread loadDetailsThread;
@@ -212,6 +214,23 @@ public class ChunkData
 		structures = new List<StructureInfo>();
 		bool[,] spotsTaken = new bool[16, 16];
 
+		//cave entrances
+		if (rnd.Next() < STRUCTURE_CHANCE_CAVE_ENTRANCE)
+		{
+
+			int h = 255;
+			while (h > 0)
+			{
+				if (blocks[8, h, 8] != BlockTypes.AIR)
+				{
+					structures.Add(new StructureInfo(new Vector3Int(0, h + 6, 0), Structure.Type.CAVE_ENTRANCE, rnd.Next()));
+					//Debug.Log($"Adding cave entrance at {position.x} {position.y}");
+					break;
+				}
+				h--;
+			}
+		}
+
 		//trees
 		for (int y = 2; y < 14; ++y)
 		{
@@ -288,6 +307,8 @@ public class ChunkData
 				}
 			}
 		}
+
+		
 
 		//already load changes from disk here (apply later)
 		saveData = SaveDataManager.instance.Load(position);

@@ -5,10 +5,12 @@ public class Structure
 	public enum Type
 	{
 		OAK_TREE,
-		WELL
+		WELL,
+		CAVE_ENTRANCE
 	}
 
 	private static Dictionary<Type, List<Change>> templates;
+	//private static byte[,,] caveMap;
 
 	public struct Change
 	{
@@ -38,6 +40,7 @@ public class Structure
 		{
 			case Type.OAK_TREE: return false;
 			case Type.WELL: return true;
+			case Type.CAVE_ENTRANCE: return true;
 		}
 		return false;
 	}
@@ -47,7 +50,6 @@ public class Structure
 	public static List<Change> Generate(Type type, int seed)
 	{
 		System.Random rnd = new System.Random(seed);
-		
 		List<Change> template = templates[type];
 		List<Change> result=template;
 		switch (type)
@@ -120,6 +122,70 @@ public class Structure
 			case Type.WELL:
 				//no variants
 				break;
+			case Type.CAVE_ENTRANCE:
+				//byte[,,] map = new byte[16, 48, 16];
+				result = new List<Change>();
+				byte[,,] caveMap =new byte[16, 48, 16];
+				//rnd = new System.Random(rnd.Next());
+				Queue<Vector3Int> path = new Queue<Vector3Int>();
+				int depth = rnd.Next(5, 11);
+				for (int i = 0; i < depth; i++)
+				{
+
+					path.Enqueue(new Vector3Int(
+						rnd.Next(2, 13),
+						44 - (i * 4),
+						rnd.Next(2, 13)
+					));
+				}
+				Vector3Int currentPos = Vector3Int.zero;
+				Vector3Int nextPos = path.Dequeue();
+				float d = 0;
+				while (path.Count > 0)
+				{
+					currentPos = nextPos;
+					nextPos = path.Dequeue();
+					float size =Mathf.Lerp(2,0.75f,  d / depth);
+
+					for (int i = 0; i < 16; ++i)
+					{
+						float lerpPos = i / 15f;
+						Vector3 lerped = Vector3.Lerp(currentPos, nextPos, lerpPos);
+						Vector3Int p = new Vector3Int((int)lerped.x, (int)lerped.y, (int)lerped.z);
+						for (int z = -2; z < 3; ++z)
+						{
+							for (int y = -2; y < 3; ++y)
+							{
+								for (int x = -2; x < 3; ++x)
+								{
+									Vector3Int b = new Vector3Int(p.x + x, p.y + y, p.z + z);
+									if (Vector3Int.Distance(p, b) > size) continue;
+									if (b.x < 0 || b.x > 15) continue;
+									if (b.y < 0 || b.y > 47) continue;
+									if (b.z < 0 || b.z > 15) continue;
+									
+									caveMap[b.x, b.y, b.z] = (byte)1;
+								}
+							}
+						}
+					}
+					d++;
+				}
+				for (int z = 0; z < 16; ++z)
+				{
+					for (int y = 0; y < 48; ++y)
+					{
+						for (int x = 0; x < 16; ++x)
+						{
+							if (caveMap[x, y, z] == 1)
+							{
+								result.Add(new Change(x, y - 48, z, BlockTypes.AIR));
+							}
+						}
+					}
+				}
+				//Debug.Log("Cave size: " + result.Count);
+				break;
 		}
 		return result;
 	}
@@ -171,6 +237,9 @@ public class Structure
 					result.Add(new Change(0, -i, 1, BlockTypes.AIR));
 					result.Add(new Change(1, -i, 1, BlockTypes.AIR));
 				}
+				break;
+			case Type.CAVE_ENTRANCE:
+				
 				break;
 		}
 		templates.Add(type, result);

@@ -15,6 +15,7 @@ public class FreeCam : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+		if (GameManager.instance.isInStartup) return;
 		if (Input.GetKeyDown(KeyCode.F1))
 		{
 			Cursor.lockState = Cursor.lockState == CursorLockMode.Locked ? CursorLockMode.None : CursorLockMode.Locked;
