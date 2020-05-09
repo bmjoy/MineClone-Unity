@@ -13,6 +13,7 @@ public class ChunkData
 
 	//devide by chance ( 1 in X )
 	const int STRUCTURE_CHANCE_TREE = (int.MaxValue / 100);
+	const int STRUCTURE_CHANCE_WELL = (int.MaxValue / 512);
 
 	private Thread loadTerrainThread;
 	private Thread loadDetailsThread;
@@ -204,8 +205,8 @@ public class ChunkData
 			}
 		}
 
-		string h = World.activeWorld.info.seed.ToString() + position.x.ToString() + position.y.ToString();
-		int structuresSeed = h.GetHashCode();
+		string hash = World.activeWorld.info.seed.ToString() + position.x.ToString() + position.y.ToString();
+		int structuresSeed = hash.GetHashCode();
 		//Debug.Log("Chunk structures seed is " + structuresSeed);
 		System.Random rnd = new System.Random(structuresSeed);
 		structures = new List<StructureInfo>();
@@ -227,13 +228,6 @@ public class ChunkData
 							if (blocks[x, height, y] == BlockTypes.GRASS)
 							{
 								structures.Add(new StructureInfo(new Vector3Int(x, height + 1, y), Structure.Type.OAK_TREE, rnd.Next()));
-								////place tree function
-								////temp
-								//blocks[x, height + 1, y] = BlockTypes.LOG_OAK;
-								//blocks[x, height +2, y] = BlockTypes.LOG_OAK;
-								//blocks[x, height + 3, y] = BlockTypes.LOG_OAK;
-								//blocks[x, height + 4, y] = BlockTypes.LOG_OAK;
-								//blocks[x, height + 5 ,y] = BlockTypes.LOG_OAK;
 								break;
 							}
 							height--;
@@ -243,6 +237,57 @@ public class ChunkData
 			}
 		}
 
+		if (rnd.Next() < STRUCTURE_CHANCE_WELL)
+		{
+			if (IsSpotFree(spotsTaken, new Vector2Int(7, 7), 3))
+			{
+				//Debug.Log("Spot is free");
+
+				int minH = 255;
+				int maxH = 0;
+				bool canPlace = true;
+				for (int y = 5; y < 11; ++y)
+				{
+					for (int x = 5; x < 11; ++x)
+					{
+						for (int h = 255; h > -1; h--)
+						{
+							byte b = blocks[x, h, y];
+							if (b != BlockTypes.AIR)
+							{
+								//Debug.Log(b);
+								canPlace &= (b == BlockTypes.GRASS);
+								minH = Mathf.Min(minH, h);
+								maxH = Mathf.Max(maxH, h);
+								break;
+							}
+						}
+					}
+				}
+				canPlace &= Mathf.Abs(minH - maxH) < 2;
+				if (canPlace)
+				{
+					Debug.Log("spawning well structure");
+					for (int y = 5; y < 11; ++y)
+					{
+						for (int x = 5; x < 11; ++x)
+						{
+							spotsTaken[x, y] = true;
+						}
+					}
+					int h = 255;
+					while (h > 0)
+					{
+						if (blocks[7, h, 7] != BlockTypes.AIR)
+						{
+							structures.Add(new StructureInfo(new Vector3Int(7, h + 1, 7), Structure.Type.WELL, rnd.Next()));
+							break;
+						}
+						h--;
+					}
+				}
+			}
+		}
 
 		//already load changes from disk here (apply later)
 		saveData = SaveDataManager.instance.Load(position);
@@ -272,15 +317,27 @@ public class ChunkData
 		for (int i = 0; i < structures.Count; ++i)
 		{
 			StructureInfo structure = structures[i];
+			bool overwritesEverything = Structure.OverwritesEverything(structure.type);
 			Vector3Int p = structure.position;
 			int x = p.x;
 			int y = p.y;
 			int z = p.z;
 			List<Structure.Change> changeList = Structure.Generate(structure.type, structure.seed);
+			//Debug.Log($"placing {structure.type} wich has {changeList.Count} blocks");
 			for (int j = 0; j < changeList.Count; ++j)
 			{
 				Structure.Change c = changeList[j];
-				blocks[x + c.x, y + c.y, z + c.z] = c.b;
+				int placeX = x + c.x;
+				int placeY = y + c.y;
+				int placeZ = z + c.z;
+
+				if (!overwritesEverything)
+				{
+					//only place new blocks if density is higher or the same (leaves can't replace dirt for example)
+					if (blocks[placeX, placeY, placeZ] < BlockTypes.density[c.b]) continue;
+				}
+
+				blocks[placeX, placeY, placeZ] = c.b;
 			}
 		}
 

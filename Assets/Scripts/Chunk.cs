@@ -66,8 +66,6 @@ public class Chunk : MonoBehaviour
 
 		byte[,,] lightMap = new byte[48, 256, 48];
 
-
-
 		chunkMap[0, 0] = backLeft;
 		chunkMap[1, 0] = back;
 		chunkMap[2, 0] = backRight;
@@ -213,7 +211,7 @@ public class Chunk : MonoBehaviour
 			}
 			simulateCount++;
 		}
-		Debug.Log("Did " + simulateCount + " light simulations");
+		//Debug.Log("Did " + simulateCount + " light simulations");
 
 		UnityEngine.Profiling.Profiler.EndSample();
 

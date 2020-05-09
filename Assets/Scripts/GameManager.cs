@@ -20,9 +20,11 @@ public class GameManager : MonoBehaviour
 		Initialize();
 		BlockTypes.Initialize();
 		textureMapper = new TextureMapper();
-		InitializeWorld(testWorld);
 		CreateTextures();
 		ui.Initialize();
+		Structure.Initialize();
+		InitializeWorld(testWorld);
+
 		//_ColorHorizon, _ColorTop, _ColorBottom;
 		Shader.SetGlobalColor("_ColorTop",new Color( 0.7692239f, 0.7906416f, 0.8113208f,1f));
 		Shader.SetGlobalColor("_ColorHorizon", new Color(0.3632075f, 0.6424405f, 1f, 1f));
