@@ -708,7 +708,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &918724955
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1912,17 +1912,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c36a77938b8a7c949b816a3cd80c3105, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  world: {fileID: 401460388}
-  mainCamera: {fileID: 963194227}
-  walkSpeed: 1
-  walkForce: 10000
-  fallSpeed: 500
-  fallForce: 1000
-  jumpVelocity: 7
-  runSpeed: 3
-  runForce: 20000
-  myRigidbody: {fileID: 1911680367}
-  highlightPrefab: {fileID: 1609518800}
+  state: 0
+  setup:
+    world: {fileID: 401460388}
+    mainCamera: {fileID: 963194227}
+    walkSpeed: 1
+    walkForce: 10000
+    fallSpeed: 500
+    fallForce: 1000
+    jumpVelocity: 7
+    runSpeed: 3
+    runForce: 20000
+    myRigidbody: {fileID: 1911680367}
+    highlightPrefab: {fileID: 1609518800}
 --- !u!1 &2000708250
 GameObject:
   m_ObjectHideFlags: 0

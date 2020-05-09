@@ -6,7 +6,7 @@ public class FreeCam : MonoBehaviour
 {
 	Vector3 euler = new Vector3();
 	public World world;
-	[SerializeField] private GameObject highlightPrefab;
+	public GameObject highlightPrefab;
 	void Start()
     {
 		Cursor.lockState = CursorLockMode.Locked;

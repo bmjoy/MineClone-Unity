@@ -5,6 +5,7 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
 	public static GameManager instance { get; private set; }
+	public bool showLoadingScreen = true;
 	public World world;
 	public GameSettings gameSettings;
 	public UI ui;
@@ -29,7 +30,16 @@ public class GameManager : MonoBehaviour
 		Shader.SetGlobalColor("_ColorTop",new Color( 0.7692239f, 0.7906416f, 0.8113208f,1f));
 		Shader.SetGlobalColor("_ColorHorizon", new Color(0.3632075f, 0.6424405f, 1f, 1f));
 		Shader.SetGlobalColor("_ColorBottom", new Color(0.1632253f, 0.2146282f, 0.2641509f, 1f));
-		isInStartup = true;
+
+#if !UNITY_EDITOR
+		showLoadingScreen = true;
+#endif
+		if (showLoadingScreen)
+		{
+			isInStartup = true;
+			world.chunkManager.isInStartup = true;
+			ui.loadingScreen.gameObject.SetActive(true);
+		}
 	}
 
 	private void Update()

@@ -5,27 +5,38 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
 	const int playerLayer = 8;
-	public World world;
-	public Camera mainCamera;
-	Vector3 euler = new Vector3();
-	public float walkSpeed, walkForce, fallSpeed, fallForce, jumpVelocity, runSpeed, runForce;
+	private Vector3 euler = new Vector3();
+	private long lastPressedSpace=0;
+	public State state=State.Creative_Walking;
 
-	[SerializeField] private Rigidbody myRigidbody;
-	[SerializeField] private GameObject highlightPrefab;
+	public Setup setup;
+
+	public enum State
+	{
+		Survival=0,
+		Creative_Walking=1,
+		Creative_Flying=2,
+		Spectator=3
+	}
+
+	[System.Serializable]
+	public class Setup
+	{
+		public World world;
+		public Camera mainCamera;
+		public float walkSpeed, walkForce, fallSpeed, fallForce, jumpVelocity, runSpeed, runForce;
+		public Rigidbody myRigidbody;
+		public GameObject highlightPrefab;
+	}
+
 	void Start()
 	{
 		Cursor.lockState = CursorLockMode.Locked;
 	}
 
 	void Update()
-    {
-		if (GameManager.instance.isInStartup)
-		{
-			myRigidbody.isKinematic = true;
-			return;
-		}
-		myRigidbody.isKinematic = false;
-
+	{
+		setup.myRigidbody.isKinematic = (GameManager.instance.isInStartup || state == State.Spectator);
 
 		if (Input.GetKeyDown(KeyCode.F1))
 		{
@@ -34,11 +45,11 @@ public class Player : MonoBehaviour
 		euler.x -= Input.GetAxis("Mouse Y") * 2f;
 		euler.y += Input.GetAxis("Mouse X") * 2f;
 		euler.x = Mathf.Clamp(euler.x, -89.99f, 89.99f);
-		mainCamera.transform.rotation = Quaternion.Euler(euler);
+		setup.mainCamera.transform.rotation = Quaternion.Euler(euler);
 		Vector3 camTargetPosition = transform.position + new Vector3(0, .5f, 0);
-		mainCamera.transform.position = Vector3.Lerp(
-			mainCamera.transform.position,
-			camTargetPosition, 
+		setup.mainCamera.transform.position = Vector3.Lerp(
+			setup.mainCamera.transform.position,
+			camTargetPosition,
 			Time.deltaTime * 20f
 		);
 
@@ -48,52 +59,109 @@ public class Player : MonoBehaviour
 		movement.y += Input.GetKey(KeyCode.W) ? 1 : 0;
 		movement.y -= Input.GetKey(KeyCode.S) ? 1 : 0;
 
-		bool running = Input.GetKey(KeyCode.LeftShift);
-		float moveForce = running ? runForce : walkForce;
-		float moveSpeed = running ? runSpeed : walkSpeed;
-		
+		bool running = Input.GetKey(KeyCode.LeftControl);
 
-		Vector3 forward = mainCamera.transform.forward;
+		if (state < State.Spectator)
+		{
+			Movement(movement, running);
+		}
+		else
+		{
+			SpectatorMovement(movement, running);
+		}
+		BlockPlacement();
+	}
+
+	private long TimeStamp()
+	{
+		return System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+	}
+
+	private void Movement(Vector2 movement ,bool running)
+	{
+		float moveForce = running ? setup.runForce : setup.walkForce;
+		float moveSpeed = running ? setup.runSpeed : setup.walkSpeed;
+
+
+		Vector3 forward = setup.mainCamera.transform.forward;
 		forward.y = 0;
 		forward.Normalize();
 
-		Vector3 right = mainCamera.transform.right;
+		Vector3 right = setup.mainCamera.transform.right;
 		right.y = 0;
 		right.Normalize();
-		
-		Vector3 stillVelocity = myRigidbody.velocity;
+
+		Vector3 stillVelocity = setup.myRigidbody.velocity;
 		stillVelocity.x = 0;
 		stillVelocity.z = 0;
-		myRigidbody.velocity = Vector3.Lerp(myRigidbody.velocity, stillVelocity, Time.deltaTime * 8f);
+		setup.myRigidbody.velocity = Vector3.Lerp(setup.myRigidbody.velocity, stillVelocity, Time.deltaTime * 8f);
 
-		myRigidbody.AddForce(forward * movement.y * (moveForce * Time.deltaTime));
-		myRigidbody.AddForce(right * movement.x * (moveForce * Time.deltaTime));
-		myRigidbody.AddForce(Vector3.down * fallForce * Time.deltaTime);
+		setup.myRigidbody.AddForce(forward * movement.y * (moveForce * Time.deltaTime));
+		setup.myRigidbody.AddForce(right * movement.x * (moveForce * Time.deltaTime));
+		if (state < (State)2)
+		{
+			setup.myRigidbody.AddForce(Vector3.down * setup.fallForce * Time.deltaTime);
+		}
 
-		Vector3 velocityWalk = myRigidbody.velocity;
+		Vector3 velocityWalk = setup.myRigidbody.velocity;
 		velocityWalk.y = 0;
-		Vector3 velocityFall = myRigidbody.velocity;
+		Vector3 velocityFall = setup.myRigidbody.velocity;
 		velocityFall.x = 0;
 		velocityFall.z = 0;
 		if (velocityWalk.magnitude > moveSpeed)
 		{
 			velocityWalk = velocityWalk.normalized * moveSpeed;
 		}
-		if (velocityFall.magnitude > fallSpeed)
+		if (velocityFall.magnitude > setup.fallSpeed)
 		{
-			velocityFall = velocityFall.normalized * fallSpeed;
+			velocityFall = velocityFall.normalized * setup.fallSpeed;
 		}
 		Vector3 targetVelocity = velocityWalk + velocityFall;
 
 		if (Input.GetKeyDown(KeyCode.Space))
 		{
-			targetVelocity.y = jumpVelocity;
+			long timestamp = TimeStamp();
+			if (timestamp < lastPressedSpace + 500)
+			{
+				if (state == State.Creative_Walking)
+				{
+					state = State.Creative_Flying;
+				}
+				else if (state == State.Creative_Flying)
+				{
+					state = State.Creative_Walking;
+
+				}
+				lastPressedSpace = 0;
+			}
+			else
+			{
+				lastPressedSpace = TimeStamp();
+				targetVelocity.y = setup.jumpVelocity;
+			}
 		}
+		if (state > (State)1)
+		{
+			targetVelocity.y = 0;
+			if (Input.GetKey(KeyCode.Space))
+			{
+				targetVelocity.y += 8;
+			}
+			if (Input.GetKey(KeyCode.LeftShift))
+			{
+				targetVelocity.y -= 8;
+			}
+		}
+
 		//myRigidbody.velocity = Vector3.Lerp(myRigidbody.velocity, targetVelocity, Time.deltaTime * 8f);
-		myRigidbody.velocity = targetVelocity;
+		setup.myRigidbody.velocity = targetVelocity;
+	}
+
+	private void BlockPlacement()
+	{
 		int layerMask = ~(1 << playerLayer);
 		RaycastHit hitInfo;
-		if (Physics.Raycast(mainCamera.transform.position, mainCamera.transform.forward, out hitInfo, 5, layerMask))
+		if (Physics.Raycast(setup.mainCamera.transform.position, setup.mainCamera.transform.forward, out hitInfo, 5, layerMask))
 		{
 			//Debug.Log(hitInfo.collider.gameObject.name);
 			Vector3 inCube = hitInfo.point - (hitInfo.normal * 0.5f);
@@ -118,19 +186,47 @@ public class Player : MonoBehaviour
 
 			if (remove)
 			{
-				world.Modify(removeBlock.x, removeBlock.y, removeBlock.z, BlockTypes.AIR);
+				setup.world.Modify(removeBlock.x, removeBlock.y, removeBlock.z, BlockTypes.AIR);
 			}
 			if (place)
 			{
-				world.Modify(placeBlock.x, placeBlock.y, placeBlock.z, UI.instance.hotbar.GetCurrentHighlighted());
+				setup.world.Modify(placeBlock.x, placeBlock.y, placeBlock.z, UI.instance.hotbar.GetCurrentHighlighted());
 			}
 
-			highlightPrefab.transform.position = removeBlock + new Vector3(.5f, .5f, .5f);
-			highlightPrefab.SetActive(true);
+			setup.highlightPrefab.transform.position = removeBlock + new Vector3(.5f, .5f, .5f);
+			setup.highlightPrefab.SetActive(true);
 		}
 		else
 		{
-			highlightPrefab.SetActive(false);
+			setup.highlightPrefab.SetActive(false);
 		}
+	}
+
+	private void SpectatorMovement(Vector2 movement, bool running)
+	{
+		float moveSpeed = running ? 16 : 8;
+
+		Vector3 forward = setup.mainCamera.transform.forward;
+		forward.y = 0;
+		forward.Normalize();
+
+		Vector3 right = setup.mainCamera.transform.right;
+		right.y = 0;
+		right.Normalize();
+
+		float altitude = 0;
+
+		if (Input.GetKey(KeyCode.Space))
+		{
+			altitude += 8;
+		}
+		if (Input.GetKey(KeyCode.LeftShift))
+		{
+			altitude -= 8;
+		}
+
+		transform.position += movement.y * forward * Time.deltaTime * moveSpeed;
+		transform.position += movement.x * right * Time.deltaTime * moveSpeed;
+		transform.position += Vector3.up * altitude * Time.deltaTime;
 	}
 }

@@ -63,7 +63,6 @@ public class ChunkManager : MonoBehaviour
 		shouldRenderThread = new Thread(ShouldRenderThread);
 		shouldRenderThread.IsBackground = true;
 		shouldRenderThread.Start();
-		isInStartup = true;
 	}
 
 	public void UpdateChunks(Camera mainCamera)
