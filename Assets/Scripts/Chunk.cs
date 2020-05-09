@@ -219,6 +219,7 @@ public class Chunk : MonoBehaviour
 
 
 		UnityEngine.Profiling.Profiler.BeginSample("CREATING FACES");
+		TextureMapper textureMapper = GameManager.instance.textureMapper;
 		for (int z = 0; z < 16; ++z)
 		{
 			for (int y = 0; y < 256; ++y)
@@ -246,19 +247,7 @@ public class Chunk : MonoBehaviour
 						byte lightU = (y == 255 ? (byte)15 : lightMap[lx, ly + 1, lz]);
 						byte lightD = (y == 0 ? (byte)15 : lightMap[lx, ly - 1, lz]);
 
-
-
-						TextureMapper.TextureMap textureMap;
-						try
-						{
-							textureMap = chunkDataManager.textureMapper.map[c];
-						}
-						catch (System.Exception e)
-						{
-							Debug.LogWarning($"{c} at {x}-{y}-{z} in {gameObject.name}");
-							throw e;
-						}
-
+						TextureMapper.TextureMap textureMap=textureMapper.map[c];
 
 						if (bR>127)
 						{

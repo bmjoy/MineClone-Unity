@@ -160,7 +160,7 @@ public class ChunkManager : MonoBehaviour
 		int activeChunksCount = activeChunks.Count;
 		int rebuildQueueCount = modifiedRebuildQueue.Count;
 		int chunksInMemoryCount = chunkDataManager.GetChunksInMemoryCount();
-		World.activeWorld.debugText.text += $" / Chunks (Q {loadQueueCount}/R {rebuildQueueCount}/A {activeChunksCount}/M {chunksInMemoryCount})";
+		World.activeWorld.debugText.text += $" / Chunks (Q:{loadQueueCount} R:{rebuildQueueCount} A:{activeChunksCount} M:{chunksInMemoryCount})";
 		UnityEngine.Profiling.Profiler.EndSample();
 	}
 

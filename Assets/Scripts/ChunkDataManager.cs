@@ -4,7 +4,7 @@ using UnityEngine;
 public class ChunkDataManager
 {
 	public Dictionary<Vector2Int, ChunkData> data;
-	public TextureMapper textureMapper;
+	private TextureMapper textureMapper;
 	private List<Vector2Int> loadQueue;
 	private List<Vector2Int> dirtyChunks;
 	private readonly Vector2Int nFront = new Vector2Int(0, 1);
@@ -16,9 +16,9 @@ public class ChunkDataManager
 	public ChunkDataManager()
 	{
 		data = new Dictionary<Vector2Int, ChunkData>();
-		textureMapper = new TextureMapper();
 		loadQueue = new List<Vector2Int>();
 		dirtyChunks = new List<Vector2Int>();
+		textureMapper = GameManager.instance.textureMapper;
 	}
 
 	public void Update()

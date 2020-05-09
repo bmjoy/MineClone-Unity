@@ -111,7 +111,7 @@ public class Player : MonoBehaviour
 			}
 			if (place)
 			{
-				world.Modify(placeBlock.x, placeBlock.y, placeBlock.z, BlockTypes.LEAVES_OAK);
+				world.Modify(placeBlock.x, placeBlock.y, placeBlock.z, UI.instance.hotbar.GetCurrentHighlighted());
 			}
 
 			highlightPrefab.transform.position = removeBlock + new Vector3(.5f, .5f, .5f);
