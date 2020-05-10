@@ -17,6 +17,7 @@ public class ChunkManager : MonoBehaviour
 	
 	private Queue<Chunk> chunkPool;
 	private Queue<Vector2Int> modifiedRebuildQueue;
+	private List<Vector2Int> modifyNeighborOrder;
 	public Dictionary<Vector2Int, Chunk> chunkMap;
 
 	//Camera info (multiple threads)
@@ -49,6 +50,7 @@ public class ChunkManager : MonoBehaviour
 		loadQueue = new List<Vector2Int>();
 		unloadQueue = new Queue<Vector2Int>();
 		modifiedRebuildQueue = new Queue<Vector2Int>();
+		modifyNeighborOrder = new List<Vector2Int>();
 		int chunkPoolSize = renderDistance * renderDistance * 4;
 		Debug.Log("Chunk pool size: " + chunkPoolSize);
 		for (int i = 0; i < chunkPoolSize; ++i)
@@ -317,11 +319,50 @@ public class ChunkManager : MonoBehaviour
 		if (!chunkMap.ContainsKey(chunk)) throw new System.Exception("Chunk is not available");
 		Debug.Log($"Chunk {chunk} Modifying {x} {y} {z} {blockType}");
 		chunkDataManager.Modify(chunk, x, y, z, blockType);
-		modifiedRebuildQueue.Enqueue(chunk);
-		modifiedRebuildQueue.Enqueue(chunk + nLeft);
-		modifiedRebuildQueue.Enqueue(chunk + nRight);
-		modifiedRebuildQueue.Enqueue(chunk + nFront);
-		modifiedRebuildQueue.Enqueue(chunk + nBack);
+		bool f = z == 15;
+		bool b = z == 0;
+		bool l = x == 0;
+		bool r = x == 15;
+		if (blockType != BlockTypes.AIR) f = b = l = r = false;
+		modifyNeighborOrder.Clear();
+		modifyNeighborOrder.Add(chunk);
+		if (f)
+		{
+			modifyNeighborOrder.Insert(0, chunk + nFront);
+		}
+		else
+		{
+			modifyNeighborOrder.Add(chunk + nFront);
+		}
+		if (b)
+		{
+			modifyNeighborOrder.Insert(0, chunk + nBack);
+		}
+		else
+		{
+			modifyNeighborOrder.Add(chunk + nBack);
+		}
+		if (l)
+		{
+			modifyNeighborOrder.Insert(0, chunk + nLeft);
+		}
+		else
+		{
+			modifyNeighborOrder.Add(chunk + nLeft);
+		}
+		if (r)
+		{
+			modifyNeighborOrder.Insert(0, chunk + nRight);
+		}
+		else
+		{
+			modifyNeighborOrder.Add(chunk + nRight);
+		}
+
+		for (int i = 0; i < modifyNeighborOrder.Count; ++i)
+		{
+			modifiedRebuildQueue.Enqueue(modifyNeighborOrder[i]);
+		}
 		modifiedRebuildQueue.Enqueue(chunk + nFront+ nLeft);
 		modifiedRebuildQueue.Enqueue(chunk + nFront+ nRight);
 		modifiedRebuildQueue.Enqueue(chunk + nBack+ nLeft);
