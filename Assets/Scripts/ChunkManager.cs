@@ -313,6 +313,12 @@ public class ChunkManager : MonoBehaviour
 		}
 	}
 
+	public byte GetBlock(Vector2Int chunk, int x, int y, int z)
+	{
+		if (!chunkMap.ContainsKey(chunk)) throw new System.Exception("Chunk is not available");
+		return chunkDataManager.GetBlock(chunk, x, y, z);
+	}
+
 	public bool Modify(Vector2Int chunk, int x, int y, int z, byte blockType)
 	{
 		if (modifiedRebuildQueue.Count > 0) return false;

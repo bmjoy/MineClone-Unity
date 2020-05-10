@@ -24,6 +24,7 @@ public class BlockTypes
 
 	public static Dictionary<byte, byte> lightLevel;
 	public static Dictionary<byte, byte> density;
+	public static Dictionary<byte, AudioManager.Dig.Type> digSound;
 
 	public static void Initialize()
 	{
@@ -64,6 +65,25 @@ public class BlockTypes
 		density.Add(DIORITE, 255);
 		density.Add(GRANITE, 255);
 		density.Add(COBBLESTONE, 255);
+
+		digSound = new Dictionary<byte, AudioManager.Dig.Type>();
+		digSound.Add(BEDROCK, AudioManager.Dig.Type.Stone);
+		digSound.Add(GRASS, AudioManager.Dig.Type.Grass);
+		digSound.Add(DIRT, AudioManager.Dig.Type.Gravel);
+		digSound.Add(STONE, AudioManager.Dig.Type.Stone);
+		digSound.Add(COAL, AudioManager.Dig.Type.Stone);
+		digSound.Add(IRON, AudioManager.Dig.Type.Stone);
+		digSound.Add(GOLD, AudioManager.Dig.Type.Stone);
+		digSound.Add(DIAMOND, AudioManager.Dig.Type.Stone);
+		digSound.Add(LOG_OAK, AudioManager.Dig.Type.Wood);
+		digSound.Add(PLANKS_OAK, AudioManager.Dig.Type.Wood);
+		digSound.Add(GLOWSTONE, AudioManager.Dig.Type.Stone);
+		digSound.Add(LEAVES_OAK, AudioManager.Dig.Type.Grass);
+		digSound.Add(AIR, AudioManager.Dig.Type.Silent);
+		digSound.Add(ANDESITE, AudioManager.Dig.Type.Stone);
+		digSound.Add(DIORITE, AudioManager.Dig.Type.Stone);
+		digSound.Add(GRANITE, AudioManager.Dig.Type.Stone);
+		digSound.Add(COBBLESTONE, AudioManager.Dig.Type.Stone);
 	}
 
 }

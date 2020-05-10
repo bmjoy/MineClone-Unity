@@ -5,26 +5,33 @@ using System.Linq;
 public class AudioManager : MonoBehaviour
 {
 	public static AudioManager instance { get; private set; }
-	public Music music=new Music();
 
-	private AudioSource musicAudioSource;
-	private AudioClip[] musicPlaylist;
+	public Music music = new Music();
+	public Dig dig = new Dig();
+
+	private AudioSource musicAudioSource, digAudioSource;
+	public AudioClip[] musicPlaylist;
 	private bool forceMusicRestart;
+	public bool ready;
 
 	public void Initialize()
 	{
 		instance = this;
-		LoadClips();
-		musicAudioSource = gameObject.AddComponent<AudioSource>();
-		musicAudioSource.playOnAwake = false;
-		musicAudioSource.loop = false;
+		
+		StartCoroutine(Load());
 		StartCoroutine(MusicPlayer());
 	}
 
 	public void PlayNewPlaylist(AudioClip[] playlist)
 	{
+		Debug.Log("Force Start Music");
 		musicPlaylist = playlist;
 		forceMusicRestart = true;
+	}
+
+	public bool IsPlayingMusic()
+	{
+		return (musicPlaylist != null && musicPlaylist.Length>0);
 	}
 
 	private IEnumerator MusicPlayer()
@@ -33,6 +40,7 @@ public class AudioManager : MonoBehaviour
 		while (true)
 		{
 			yield return null;
+			if (!ready) continue;
 			if (forceMusicRestart)
 			{
 				if (musicAudioSource.clip != null)
@@ -75,11 +83,19 @@ public class AudioManager : MonoBehaviour
 		}
 	}
 
-	private void LoadClips()
+	private IEnumerator Load()
 	{
-		List<AudioClip> game = Resources.LoadAll<AudioClip>("Audio/music/game").ToList<AudioClip>();
-		List<AudioClip> creative = Resources.LoadAll<AudioClip>("Audio/music/game/creative").ToList<AudioClip>();
-		List<AudioClip> menu = Resources.LoadAll<AudioClip>("Audio/music/menu").ToList<AudioClip>();
+		yield return null;
+
+		musicAudioSource = gameObject.AddComponent<AudioSource>();
+		musicAudioSource.playOnAwake = false;
+		musicAudioSource.loop = false;
+
+		yield return null;
+
+		List<AudioClip> game = Resources.LoadAll<AudioClip>("Audio/music/game").ToList();
+		List<AudioClip> creative = Resources.LoadAll<AudioClip>("Audio/music/game/creative").ToList();
+		List<AudioClip> menu = Resources.LoadAll<AudioClip>("Audio/music/menu").ToList();
 
 		foreach (AudioClip ac in creative)
 		{
@@ -88,6 +104,35 @@ public class AudioManager : MonoBehaviour
 		music.game.clips = Shuffle(game).ToArray();
 		music.game.creative.clips = Shuffle(creative).ToArray();
 		music.menu.clips = Shuffle(menu).ToArray();
+
+		Debug.Log("Music started loading");
+
+		yield return null;
+
+		AudioClip[] digSounds = Resources.LoadAll<AudioClip>("Audio/dig");
+		List<AudioClip> grassSounds = new List<AudioClip>();
+		List<AudioClip> stoneSounds = new List<AudioClip>();
+		List<AudioClip> woodSounds = new List<AudioClip>();
+		List<AudioClip> gravelSounds = new List<AudioClip>();
+
+		for (int i = 0; i < digSounds.Length; ++i)
+		{
+			if (digSounds[i].name.Contains("wet")) continue;
+			if (digSounds[i].name.Contains("grass")) grassSounds.Add(digSounds[i]);
+			if (digSounds[i].name.Contains("stone")) stoneSounds.Add(digSounds[i]);
+			if (digSounds[i].name.Contains("gravel")) gravelSounds.Add(digSounds[i]);
+			if (digSounds[i].name.Contains("wood")) woodSounds.Add(digSounds[i]);
+		}
+
+		dig.grass = grassSounds.ToArray();
+		dig.gravel = gravelSounds.ToArray();
+		dig.stone = stoneSounds.ToArray();
+		dig.wood = woodSounds.ToArray();
+
+		Debug.Log("Dig sounds started loading");
+
+
+		ready = true;
 	}
 
 	[System.Serializable]
@@ -111,6 +156,41 @@ public class AudioManager : MonoBehaviour
 		{
 			public AudioClip[] clips;
 		}
+	}
+
+	[System.Serializable]
+	public class Dig
+	{
+		public void Play(Type type, Vector3 position)
+		{
+			Debug.Log("Playing sound of type " + type);
+			AudioClip[] clips = GetClips(type);
+			if (clips == null) return;
+			AudioClip clip = clips[Random.Range(0,clips.Length)];
+			//Debug.Log("Playing sound " + clip.name);
+			AudioSource.PlayClipAtPoint(clip, position);
+		}
+
+		public enum Type
+		{
+			Silent,
+			Stone,
+			Wood,
+			Gravel,
+			Grass
+		}
+		public AudioClip[] GetClips(Type type)
+		{
+			switch (type)
+			{
+				case Type.Stone: return stone;
+				case Type.Wood: return wood;
+				case Type.Gravel: return gravel;
+				case Type.Grass: return grass;
+			}
+			return null;
+		}
+		public AudioClip[] stone, wood, gravel, grass;
 	}
 
 	//https://stackoverflow.com/questions/273313/randomize-a-listt

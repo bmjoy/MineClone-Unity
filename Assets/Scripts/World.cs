@@ -45,6 +45,21 @@ public class World : MonoBehaviour
 		return chunkManager.Modify(new Vector2Int(chunkX, chunkY), relativeX, y, relativeZ, blockType);
 	}
 
+	public byte GetBlock(int x, int y, int z)
+	{
+		if (!initialized) return 255;
+		if (y < 0 || y > 255)
+		{
+			Debug.LogWarning("This is outside build limit");
+			return 255;
+		}
+		int chunkX = Mathf.FloorToInt(x / 16f);
+		int chunkY = Mathf.FloorToInt(z / 16f);
+		int relativeX = x - (chunkX * 16);
+		int relativeZ = z - (chunkY * 16);
+		return chunkManager.GetBlock(new Vector2Int(chunkX, chunkY), relativeX, y, relativeZ);
+	}
+
 	private int GenerateSeed()
 	{
 		int tickCount = System.Environment.TickCount;

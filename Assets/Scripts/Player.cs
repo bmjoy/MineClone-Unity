@@ -186,11 +186,21 @@ public class Player : MonoBehaviour
 
 			if (remove)
 			{
-				setup.world.Modify(removeBlock.x, removeBlock.y, removeBlock.z, BlockTypes.AIR);
+				byte blockToReplace = setup.world.GetBlock(removeBlock.x, removeBlock.y, removeBlock.z);
+				if (setup.world.Modify(removeBlock.x, removeBlock.y, removeBlock.z, BlockTypes.AIR))
+				{
+
+					AudioManager.instance.dig.Play(BlockTypes.digSound[blockToReplace], removeBlock);
+					place = false;
+				}
 			}
 			if (place)
 			{
-				setup.world.Modify(placeBlock.x, placeBlock.y, placeBlock.z, UI.instance.hotbar.GetCurrentHighlighted());
+				byte block = UI.instance.hotbar.GetCurrentHighlighted();
+				if (setup.world.Modify(placeBlock.x, placeBlock.y, placeBlock.z, block))
+				{
+					AudioManager.instance.dig.Play(BlockTypes.digSound[block], removeBlock);
+				}
 			}
 
 			setup.highlightPrefab.transform.position = removeBlock + new Vector3(.5f, .5f, .5f);

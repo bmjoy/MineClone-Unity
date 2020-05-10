@@ -42,16 +42,23 @@ public class GameManager : MonoBehaviour
 			isInStartup = true;
 			world.chunkManager.isInStartup = true;
 			ui.loadingScreen.gameObject.SetActive(true);
-			audioManager.PlayNewPlaylist(audioManager.music.menu.clips);
-		}
-		else
-		{
-			audioManager.PlayNewPlaylist(audioManager.music.game.clips);
 		}
 	}
 
 	private void Update()
 	{
+		if (!audioManager.IsPlayingMusic())
+		{
+			if (isInStartup)
+			{
+				audioManager.PlayNewPlaylist(audioManager.music.menu.clips);
+			}
+			else
+			{
+				audioManager.PlayNewPlaylist(audioManager.music.game.clips);
+
+			}
+		}
 		if (isInStartup)
 		{
 			if (world.chunkManager.StartupFinished())

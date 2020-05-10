@@ -128,8 +128,8 @@ public class ChunkDataManager
 			z += 16;
 			chunk.y -= 1;
 		}
-		if (y > 255) return 0;
-		if (y < 0) return 0;
+		if (y > 255) return 255;
+		if (y < 0) return 255;
 		return data[chunk].GetBlocks()[x, y, z];
 	}
 
