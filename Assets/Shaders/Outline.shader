@@ -6,7 +6,7 @@
     }
     SubShader
     {
-		Tags { "RenderType" = "Opaque" "Queue" = "Geometry+400" }
+		Tags { "RenderType" = "Transparent" "Queue" = "Transparent" }
         LOD 100
 		offset -1,-1
 		zwrite off
