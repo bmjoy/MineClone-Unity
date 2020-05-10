@@ -53,12 +53,12 @@ Shader "Unlit/Block"
 				return vs;
 			}
 
-			uniform fixed4 _ColorHorizon, _ColorTop, _ColorBottom;
+			uniform fixed4 _SkyColorHorizon, _SkyColorTop, _SkyColorBottom;
 			fixed4 GetSkyColor(float3 viewDir)
 			{
 				float2 lat = atan2((abs(viewDir.y)), sqrt(viewDir.x*viewDir.x + viewDir.z*viewDir.z));
 				float height = pow(2 * lat / 3.141592, 1);
-				return lerp(_ColorHorizon, lerp(_ColorBottom, _ColorTop, saturate(sign(viewDir.y))), height);
+				return lerp(_SkyColorHorizon, lerp(_SkyColorBottom, _SkyColorTop, saturate(sign(viewDir.y))), height);
 			}
 
 			uniform sampler2D _BlockTextures;
