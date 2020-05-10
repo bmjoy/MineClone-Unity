@@ -4,6 +4,7 @@
 !/Assets/
 !/ProjectSettings/
 !/Packages/
+*.ogg
 !README.md
 !LICENSE
 !/UnityPackage/
