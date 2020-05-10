@@ -1821,7 +1821,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c36a77938b8a7c949b816a3cd80c3105, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  state: 1
+  state: 3
   setup:
     world: {fileID: 401460388}
     mainCamera: {fileID: 963194227}
@@ -1868,6 +1868,7 @@ MonoBehaviour:
   gameSettings:
     RenderDistance: 16
     maximumLoadQueueSize: 8
+    minimumLightLevel: 0.1
   ui: {fileID: 2018103289}
   isInStartup: 0
   testWorld:

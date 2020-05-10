@@ -69,10 +69,10 @@ public class Hotbar : MonoBehaviour
 			TextureMapper.TextureMap textureMap = textureMapper.map[(byte)textureId];
 			TextureMapper.TextureMap.Face face = textureMap.front;
 			Rect uvRect = new Rect(
-				1.0f / 512 * face.bl.x,
-				1-(1.0f / 512 * face.bl.y),
-				1.0f / 512 * 16,
-				1.0f / 512 * 16
+				1.0f / 128 * face.bl.x * 16,
+				1-(1.0f / 128 * face.bl.y * 16),
+				1.0f / 128 * 16,
+				1.0f / 128 * 16
 			);
 			rawImage.color = textureMap.defaultColor;
 			rawImage.uvRect = uvRect;

@@ -46,7 +46,7 @@ Shader "Unlit/Block"
 				vs.screen_vertex = UnityObjectToClipPos(vertex);
 				vs.world_vertex = mul(unity_ObjectToWorld, vertex);
 				vs.normal = UnityObjectToWorldNormal(normal);
-				vs.uv= uv / 512.0;
+				vs.uv= uv / 128 * 16;
 				vs.uv.y = 1 - vs.uv.y;
 				vs.color = color;
 				//vs.uv = uv;
@@ -62,6 +62,7 @@ Shader "Unlit/Block"
 			}
 
 			uniform sampler2D _BlockTextures;
+			uniform float _MinLightLevel;
 			structurePS pixel_shader(structureVS vs)
 			{
 				structurePS ps;
@@ -78,8 +79,9 @@ Shader "Unlit/Block"
 				float fade = saturate(pow(distance(_WorldSpaceCameraPos.xz, vs.world_vertex.xz) / (16.0 - 1.0) / 16.0, 12));
 				float4 vertexColor = vs.color;
 				c.rgb *= vertexColor.rgb;
+
 				float lightLevel = vertexColor.a * 16;
-				float light = lerp(0.1, 1, lightLevel);
+				float light = lerp(_MinLightLevel, 1, lightLevel);
 				
 				c *= light;
 				c.rgb += diffuseColor;
