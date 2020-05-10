@@ -5,6 +5,9 @@
 -Light simulation and smooth light rendering  
 -Saves changes to save file  
 -Player controller  
+
+The project does not contain official textures from Minecraft,  
+the placeholder textures can be replaced in "Assets/Textures/"
 ![alt text](https://i.postimg.cc/85YKRwzJ/minecraft-Unity-Screenshot2.jpg)
 
 Video:  
