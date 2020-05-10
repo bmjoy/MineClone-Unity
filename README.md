@@ -1,4 +1,4 @@
-# Minecraft-In-Unity
+# Minecraft Clone made in Unity3D
 ![alt text](https://i.postimg.cc/nc9knXQG/minecraft-Unity-Github-Thumb2.jpg)
 -Infinite chunk generation  
 -Generates caves and ores  
