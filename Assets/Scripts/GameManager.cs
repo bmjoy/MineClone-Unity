@@ -11,6 +11,7 @@ public class GameManager : MonoBehaviour
 	public UI ui;
 	private SaveDataManager saveDataManager;
 	public TextureMapper textureMapper;
+	public AudioManager audioManager;
 	public bool isInStartup;
 	public WorldInfo testWorld;
 	public Texture2D textures;
@@ -21,6 +22,8 @@ public class GameManager : MonoBehaviour
 		Initialize();
 		BlockTypes.Initialize();
 		textureMapper = new TextureMapper();
+		audioManager.Initialize();
+		
 		CreateTextures();
 		Structure.Initialize();
 		InitializeWorld(testWorld);
@@ -31,7 +34,6 @@ public class GameManager : MonoBehaviour
 		Shader.SetGlobalColor("_SkyColorHorizon", new Color(0.3632075f, 0.6424405f, 1f, 1f));
 		Shader.SetGlobalColor("_SkyColorBottom", new Color(0.1632253f, 0.2146282f, 0.2641509f, 1f));
 		Shader.SetGlobalFloat("_MinLightLevel", gameSettings.minimumLightLevel);
-
 #if !UNITY_EDITOR
 		showLoadingScreen = true;
 #endif
@@ -40,6 +42,11 @@ public class GameManager : MonoBehaviour
 			isInStartup = true;
 			world.chunkManager.isInStartup = true;
 			ui.loadingScreen.gameObject.SetActive(true);
+			audioManager.PlayNewPlaylist(audioManager.music.menu.clips);
+		}
+		else
+		{
+			audioManager.PlayNewPlaylist(audioManager.music.game.clips);
 		}
 	}
 
@@ -52,6 +59,7 @@ public class GameManager : MonoBehaviour
 				world.chunkManager.isInStartup = false;
 				isInStartup = false;
 				ui.loadingScreen.gameObject.SetActive(false);
+				audioManager.PlayNewPlaylist(audioManager.music.game.clips);
 				System.GC.Collect();
 			}
 		}
