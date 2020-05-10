@@ -14,12 +14,22 @@ public class AudioManager : MonoBehaviour
 	private bool forceMusicRestart;
 	public bool ready;
 
+	private void Awake()
+	{
+		if (instance != null)
+		{
+			gameObject.SetActive(false);
+			return;
+		}
+	}
+
 	public void Initialize()
 	{
+		if (ready) return;
 		instance = this;
-		
 		StartCoroutine(Load());
 		StartCoroutine(MusicPlayer());
+		DontDestroyOnLoad(this);
 	}
 
 	public void PlayNewPlaylist(AudioClip[] playlist)

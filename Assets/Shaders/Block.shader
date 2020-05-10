@@ -85,6 +85,7 @@ Shader "Unlit/Block"
 				
 				c *= light;
 				c.rgb += diffuseColor;
+				c.a = 1;
 
 				ps.albedo = 0;
 				ps.specular = half4(specular, 0);

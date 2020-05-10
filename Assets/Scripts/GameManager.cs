@@ -15,6 +15,8 @@ public class GameManager : MonoBehaviour
 	public bool isInStartup;
 	public WorldInfo testWorld;
 	public Texture2D textures;
+	public Camera screenshotCamera;
+	public Texture2D latestScreenshot;
 
 	private void Start()
 	{
@@ -22,8 +24,14 @@ public class GameManager : MonoBehaviour
 		Initialize();
 		BlockTypes.Initialize();
 		textureMapper = new TextureMapper();
-		audioManager.Initialize();
-		
+
+		if (AudioManager.instance == null)
+		{
+			audioManager.Initialize();
+		}
+		audioManager = AudioManager.instance;
+
+
 		CreateTextures();
 		Structure.Initialize();
 		InitializeWorld(testWorld);
@@ -59,6 +67,17 @@ public class GameManager : MonoBehaviour
 
 			}
 		}
+		else
+		{
+			if (!isInStartup)
+			{
+				if (audioManager.musicPlaylist != audioManager.music.game.clips)
+				{
+					audioManager.PlayNewPlaylist(audioManager.music.game.clips);
+
+				}
+			}
+		}
 		if (isInStartup)
 		{
 			if (world.chunkManager.StartupFinished())
@@ -71,6 +90,7 @@ public class GameManager : MonoBehaviour
 			}
 		}
 		ui.UpdateUI();
+		DebugStuff();
 	}
 
 	private void Initialize()
@@ -92,5 +112,35 @@ public class GameManager : MonoBehaviour
 		temp.Apply();
 		textures = temp;
 		Shader.SetGlobalTexture("_BlockTextures", textures);
+	}
+
+	private void DebugStuff()
+	{
+		//360 screenshot
+		if (Input.GetKeyDown(KeyCode.F4))
+		{
+			RenderTexture cubemap = new RenderTexture(4096, 4096, 0, RenderTextureFormat.ARGB32);
+			cubemap.dimension = UnityEngine.Rendering.TextureDimension.Cube;
+			cubemap.Create();
+			screenshotCamera.transform.position = world.mainCamera.transform.position;
+			screenshotCamera.RenderToCubemap(cubemap);
+			
+			RenderTexture equirect = new RenderTexture(4096, 2048, 0, RenderTextureFormat.ARGB32);
+			Texture2D texture = new Texture2D(4096, 2048, TextureFormat.ARGB32, false);
+			cubemap.ConvertToEquirect(equirect, Camera.MonoOrStereoscopicEye.Mono);
+			RenderTexture temp = RenderTexture.active;
+			RenderTexture.active = equirect;
+			texture.ReadPixels(new Rect(0, 0, equirect.width, equirect.height), 0, 0);
+			RenderTexture.active = temp;
+			texture.Apply();
+			latestScreenshot = texture;
+			System.IO.FileInfo file = new System.IO.FileInfo(Application.persistentDataPath + "/" + TimeStamp().ToString() + ".png");
+			System.IO.File.WriteAllBytes(file.FullName, texture.EncodeToPNG());
+		}
+	}
+
+	private long TimeStamp()
+	{
+		return System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 	}
 }
