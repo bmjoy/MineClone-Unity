@@ -25,4 +25,28 @@ public class MenuItems : MonoBehaviour
 		process.StartInfo = startInfo;
 		process.Start();
 	}
+	[MenuItem("Minecraft-Unity/Create Audio Placeholders")]
+	static void CreateAudioPlaceholders()
+	{
+		CreateAudioPlaceholders(new DirectoryInfo(new DirectoryInfo(Application.dataPath).FullName + "/Resources/Audio"));
+		AssetDatabase.Refresh();
+	}
+
+	static void CreateAudioPlaceholders(DirectoryInfo directory)
+	{
+		foreach (DirectoryInfo d in directory.GetDirectories())
+		{
+			CreateAudioPlaceholders(d);
+		}
+		FileInfo[] files = directory.GetFiles();
+		for (int i = 0; i < files.Length; ++i)
+		{
+			FileInfo file = files[i];
+			if (file.Name.EndsWith(".ogg"))
+			{
+				FileInfo placeHolder = new FileInfo(file.FullName + ".placeholder");
+				if (!placeHolder.Exists) placeHolder.Create();
+			}
+		}
+	}
 }
