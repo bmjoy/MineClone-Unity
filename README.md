@@ -6,8 +6,10 @@
 -Saves changes to save file  
 -Player controller  
 
-The project does not contain official textures from Minecraft,  
-the placeholder textures can be replaced in "Assets/Textures/"
+The project does not contain official textures from Minecraft and no audio!  
+  
+The placeholder textures can be replaced in "Assets/Textures/".  
+Audio files can be placed in "Assets/Resources/Audio" in the correct subfolders (make sure "Load in background" is checked).  
 ![alt text](https://i.postimg.cc/85YKRwzJ/minecraft-Unity-Screenshot2.jpg)
 
 Video:  
