@@ -40,7 +40,7 @@ public class Player : MonoBehaviour
 	{
 		setup.myRigidbody.isKinematic = (GameManager.instance.isInStartup || state == State.Spectator);
 
-		if (Input.GetKeyDown(KeyCode.F1))
+		if (Input.GetKeyDown(KeyCode.Escape))
 		{
 			Cursor.lockState = Cursor.lockState == CursorLockMode.Locked ? CursorLockMode.None : CursorLockMode.Locked;
 			Cursor.visible = (Cursor.lockState == CursorLockMode.None);

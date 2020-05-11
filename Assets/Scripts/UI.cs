@@ -5,6 +5,8 @@ using UnityEngine;
 public class UI : MonoBehaviour
 {
 	public static UI instance { get; private set; }
+	public GameObject playingUI;
+	private bool hideUI = false;
 	public Hotbar hotbar;
 	public LoadingScreen loadingScreen;
 	public void Initialize()
@@ -16,5 +18,10 @@ public class UI : MonoBehaviour
 	public void UpdateUI()
 	{
 		hotbar.UpdateHotbar();
+		if (Input.GetKeyDown(KeyCode.F1))
+		{
+			hideUI = !hideUI;
+			playingUI.gameObject.SetActive(!hideUI);
+		}
 	}
 }
