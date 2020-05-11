@@ -62,7 +62,8 @@ public class Player : MonoBehaviour
 		movement.y += Input.GetKey(KeyCode.W) ? 1 : 0;
 		movement.y -= Input.GetKey(KeyCode.S) ? 1 : 0;
 
-		bool running = Input.GetKey(KeyCode.LeftControl);
+
+		bool running = Input.GetKey(KeyCode.LeftControl) && movement!=Vector2.zero;
 
 		if (state < State.Spectator)
 		{
@@ -72,7 +73,11 @@ public class Player : MonoBehaviour
 		{
 			SpectatorMovement(movement, running);
 		}
-		setup.mainCamera.fieldOfView = Mathf.Lerp(setup.mainCamera.fieldOfView, setup.fieldOfView + (running ? 10 : 0), Time.deltaTime * 8f);
+		float fov = setup.fieldOfView + (running ? 10 : 0);
+		//if (movement == Vector2.zero) fov = Input.GetKey(KeyCode.Tab) ? 10 : fov;
+		setup.mainCamera.fieldOfView = Mathf.Lerp(setup.mainCamera.fieldOfView, fov, Time.deltaTime * 8f);
+		if (Input.GetKey(KeyCode.Tab)) setup.mainCamera.fieldOfView = 20;
+		if (Input.GetKeyUp(KeyCode.Tab)) setup.mainCamera.fieldOfView = fov;
 		BlockPlacement();
 	}
 
