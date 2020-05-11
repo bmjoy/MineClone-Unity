@@ -25,6 +25,7 @@ public class Player : MonoBehaviour
 		public World world;
 		public Camera mainCamera;
 		public float walkSpeed, walkForce, fallSpeed, fallForce, jumpVelocity, runSpeed, runForce;
+		public float fieldOfView=60;
 		public Rigidbody myRigidbody;
 		public GameObject highlightPrefab;
 	}
@@ -32,6 +33,7 @@ public class Player : MonoBehaviour
 	void Start()
 	{
 		Cursor.lockState = CursorLockMode.Locked;
+		Cursor.visible = false;
 	}
 
 	void Update()
@@ -41,6 +43,7 @@ public class Player : MonoBehaviour
 		if (Input.GetKeyDown(KeyCode.F1))
 		{
 			Cursor.lockState = Cursor.lockState == CursorLockMode.Locked ? CursorLockMode.None : CursorLockMode.Locked;
+			Cursor.visible = (Cursor.lockState == CursorLockMode.None);
 		}
 		euler.x -= Input.GetAxis("Mouse Y") * 2f;
 		euler.y += Input.GetAxis("Mouse X") * 2f;
@@ -69,6 +72,7 @@ public class Player : MonoBehaviour
 		{
 			SpectatorMovement(movement, running);
 		}
+		setup.mainCamera.fieldOfView = Mathf.Lerp(setup.mainCamera.fieldOfView, setup.fieldOfView + (running ? 10 : 0), Time.deltaTime * 8f);
 		BlockPlacement();
 	}
 
