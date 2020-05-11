@@ -1963,6 +1963,7 @@ MonoBehaviour:
     jumpVelocity: 7
     runSpeed: 3
     runForce: 20000
+    fieldOfView: 60
     myRigidbody: {fileID: 1911680367}
     highlightPrefab: {fileID: 1609518800}
 --- !u!1 &2000708250
