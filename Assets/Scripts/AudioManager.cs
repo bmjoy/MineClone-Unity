@@ -34,7 +34,7 @@ public class AudioManager : MonoBehaviour
 
 	public void PlayNewPlaylist(AudioClip[] playlist)
 	{
-		Debug.Log("Force Start Music");
+		//Debug.Log("Force Start Music");
 		musicPlaylist = playlist;
 		forceMusicRestart = true;
 	}
