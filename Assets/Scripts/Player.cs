@@ -6,9 +6,13 @@ public class Player : MonoBehaviour
 {
 	const int playerLayer = 8;
 	private Vector3 euler = new Vector3();
+	private Quaternion cameraRotation;
+	private Vector3 cameraPosition;
 	private long lastPressedSpace=0;
 	public State state=State.Creative_Walking;
-
+	private bool running=false;
+	private float wobble = 0;
+	private float wobbleIntensity = 0;
 	public Setup setup;
 
 	public enum State
@@ -34,6 +38,8 @@ public class Player : MonoBehaviour
 	{
 		Cursor.lockState = CursorLockMode.Locked;
 		Cursor.visible = false;
+		cameraRotation = Quaternion.Euler(euler);
+		cameraPosition = transform.position + new Vector3(0, .5f, 0);
 	}
 
 	void Update()
@@ -45,16 +51,7 @@ public class Player : MonoBehaviour
 			Cursor.lockState = Cursor.lockState == CursorLockMode.Locked ? CursorLockMode.None : CursorLockMode.Locked;
 			Cursor.visible = (Cursor.lockState == CursorLockMode.None);
 		}
-		euler.x -= Input.GetAxis("Mouse Y") * 2f;
-		euler.y += Input.GetAxis("Mouse X") * 2f;
-		euler.x = Mathf.Clamp(euler.x, -89.99f, 89.99f);
-		setup.mainCamera.transform.rotation = Quaternion.Euler(euler);
-		Vector3 camTargetPosition = transform.position + new Vector3(0, .5f, 0);
-		setup.mainCamera.transform.position = Vector3.Lerp(
-			setup.mainCamera.transform.position,
-			camTargetPosition,
-			Time.deltaTime * 20f
-		);
+		
 
 		Vector2 movement = new Vector2();
 		movement.x += Input.GetKey(KeyCode.D) ? 1 : 0;
@@ -62,8 +59,14 @@ public class Player : MonoBehaviour
 		movement.y += Input.GetKey(KeyCode.W) ? 1 : 0;
 		movement.y -= Input.GetKey(KeyCode.S) ? 1 : 0;
 
-
-		bool running = Input.GetKey(KeyCode.LeftControl) && movement!=Vector2.zero;
+		if (Input.GetKeyDown(KeyCode.LeftControl))
+		{
+			if (movement != Vector2.zero) running = true;
+		}
+		if (movement == Vector2.zero) running = false;
+		float wobbleTargetIntensity = movement == Vector2.zero ? 0 : (running ? 2f : 1f);
+		if (state > (State)1) wobbleTargetIntensity = 0;
+		wobbleIntensity = Mathf.Lerp(wobbleIntensity, wobbleTargetIntensity, Time.deltaTime * 16f);
 
 		if (state < State.Spectator)
 		{
@@ -73,17 +76,45 @@ public class Player : MonoBehaviour
 		{
 			SpectatorMovement(movement, running);
 		}
-		float fov = setup.fieldOfView + (running ? 10 : 0);
-		//if (movement == Vector2.zero) fov = Input.GetKey(KeyCode.Tab) ? 10 : fov;
-		setup.mainCamera.fieldOfView = Mathf.Lerp(setup.mainCamera.fieldOfView, fov, Time.deltaTime * 8f);
-		if (Input.GetKey(KeyCode.Tab)) setup.mainCamera.fieldOfView = 20;
-		if (Input.GetKeyUp(KeyCode.Tab)) setup.mainCamera.fieldOfView = fov;
+		
+		CameraUpdate();
 		BlockPlacement();
 	}
 
 	private long TimeStamp()
 	{
 		return System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+	}
+
+	private void CameraUpdate()
+	{
+		Camera cam = setup.mainCamera;
+		euler.x -= Input.GetAxis("Mouse Y") * 2f;
+		euler.y += Input.GetAxis("Mouse X") * 2f;
+		euler.x = Mathf.Clamp(euler.x, -89.99f, 89.99f);
+		cameraRotation = Quaternion.Euler(euler);
+		Vector3 camTargetPosition = transform.position + new Vector3(0, .5f, 0);
+		cameraPosition = Vector3.Lerp(
+			cameraPosition,
+			camTargetPosition,
+			Time.deltaTime * 20f
+		);
+
+		wobble += Time.deltaTime * 8f*(running?1.3f:1f);
+		cam.transform.rotation = cameraRotation;
+		cam.transform.position = cameraPosition;
+
+		cam.transform.Rotate(Vector3.forward, Mathf.Sin(wobble) * 0.2f* wobbleIntensity);
+		cam.transform.Rotate(Vector3.right, Mathf.Sin(wobble * 2f) * 0.3f* wobbleIntensity);
+		cam.transform.Rotate(Vector3.up, -Mathf.Sin(wobble ) * 0.2f* wobbleIntensity);
+		cam.transform.position+=(cam.transform.up * Mathf.Sin(wobble*2f) * 0.05f* wobbleIntensity);
+		cam.transform.position += (cam.transform.right * Mathf.Sin(wobble) * 0.05f* wobbleIntensity);
+
+		float fov = setup.fieldOfView + (running ? 10 : 0);
+		//if (movement == Vector2.zero) fov = Input.GetKey(KeyCode.Tab) ? 10 : fov;
+		cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, fov, Time.deltaTime * 8f);
+		if (Input.GetKey(KeyCode.Tab)) cam.fieldOfView = 20;
+		if (Input.GetKeyUp(KeyCode.Tab)) cam.fieldOfView = fov;
 	}
 
 	private void Movement(Vector2 movement ,bool running)
